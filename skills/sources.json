@@ -1,0 +1,81 @@
+{
+  "sources": [
+    {
+      "repo": "obra/superpowers",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "skill_path": "skills/{name}/SKILL.md",
+      "skills": [
+        "brainstorming",
+        "writing-plans",
+        "executing-plans",
+        "systematic-debugging",
+        "test-driven-development",
+        "verification-before-completion",
+        "requesting-code-review",
+        "receiving-code-review",
+        "subagent-driven-development",
+        "using-git-worktrees",
+        "writing-skills",
+        "dispatching-parallel-agents",
+        "finishing-a-development-branch",
+        "using-superpowers",
+        "diagnosing-superpowers"
+      ]
+    },
+    {
+      "repo": "addyosmani/agent-skills",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "skill_path": "skills/{name}/SKILL.md",
+      "skills": [
+        "spec-driven-development",
+        "incremental-implementation",
+        "api-and-interface-design",
+        "frontend-ui-engineering",
+        "debugging-and-error-recovery",
+        "browser-testing-with-devtools",
+        "code-review-and-quality",
+        "code-simplification",
+        "security-and-hardening"
+      ]
+    },
+    {
+      "repo": "anthropics/skills",
+      "license": "UNLICENSED",
+      "license_file": "LICENSE",
+      "skill_path": "skills/{name}/SKILL.md",
+      "skills": ["frontend-design", "webapp-testing"]
+    },
+    {
+      "repo": "ultralytics/skills",
+      "license": "AGPL-3.0",
+      "license_file": "LICENSE",
+      "skill_path": "skills/{name}/SKILL.md",
+      "skills": [
+        "yolo",
+        "yolo-datasets",
+        "yolo-training",
+        "yolo-tuning",
+        "yolo-models",
+        "yolo-inference",
+        "yolo-export",
+        "platform-cli"
+      ]
+    },
+    {
+      "repo": "xcrrr/claude-skills",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "skill_path": "skills/ai-ml/{name}/SKILL.md",
+      "skills": ["dataset-curator"]
+    },
+    {
+      "repo": "mattpocock/skills",
+      "license": "MIT",
+      "license_file": "LICENSE",
+      "skill_path": "skills/engineering/{name}/SKILL.md",
+      "skills": ["tdd", "diagnosing-bugs", "code-review"]
+    }
+  ]
+}

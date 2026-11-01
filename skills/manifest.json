@@ -1,0 +1,242 @@
+{
+  "addyosmani/agent-skills": {
+    "api-and-interface-design": {
+      "bytes": 14938,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/api-and-interface-design/SKILL.md",
+      "sha256": "cc5e2166c484b2c297e8253f56e7525e5031f81d66101ca4e760ef378ea6bad0"
+    },
+    "browser-testing-with-devtools": {
+      "bytes": 14640,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/browser-testing-with-devtools/SKILL.md",
+      "sha256": "e28dd45416e6df93f0db6fffeb3aa2477a0e48a22f8e05fd5bb1892484115bb6"
+    },
+    "code-review-and-quality": {
+      "bytes": 20976,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/code-review-and-quality/SKILL.md",
+      "sha256": "2db1e850379f255fd3091ef278cde24cd6c7d2ba23e360cc52ea522c40d4396e"
+    },
+    "code-simplification": {
+      "bytes": 13719,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/code-simplification/SKILL.md",
+      "sha256": "e13b433345e6bf425c3625442ac1b3507b371c18d7ea3e3db822da7a7f742a29"
+    },
+    "debugging-and-error-recovery": {
+      "bytes": 10893,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/debugging-and-error-recovery/SKILL.md",
+      "sha256": "01cff31fbd8796b444225f8a8386219792c25cebb5d4d76df664afd1d13ed610"
+    },
+    "frontend-ui-engineering": {
+      "bytes": 11950,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/frontend-ui-engineering/SKILL.md",
+      "sha256": "93a0ebffbb6075340d85255ae50724bc5e5e19b0fcbf2ae5d5857b9c5ddf9498"
+    },
+    "incremental-implementation": {
+      "bytes": 9629,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/incremental-implementation/SKILL.md",
+      "sha256": "df66536610071727feae1ca95f3c391c248ad828041750ccd3699cce763aa00b"
+    },
+    "security-and-hardening": {
+      "bytes": 17578,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/security-and-hardening/SKILL.md",
+      "sha256": "358566859a3d791c474eb9fa36939b45875c7480d7d4650eaa092dceae2c1c37"
+    },
+    "spec-driven-development": {
+      "bytes": 13099,
+      "license": "MIT",
+      "path": "addyosmani__agent-skills/spec-driven-development/SKILL.md",
+      "sha256": "b9d05b4259c14550bbffbaafd8201492129926d37ede716db352c6e4f91b404d"
+    }
+  },
+  "anthropics/skills": {
+    "frontend-design": {
+      "bytes": 9390,
+      "license": "UNLICENSED",
+      "path": "anthropics__skills/frontend-design/SKILL.md",
+      "sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+    },
+    "webapp-testing": {
+      "bytes": 3913,
+      "license": "UNLICENSED",
+      "path": "anthropics__skills/webapp-testing/SKILL.md",
+      "sha256": "51b7349e77ec63b7744a6f63647e7566a0b4d2e301121cc10e8c2113af6556a2"
+    }
+  },
+  "mattpocock/skills": {
+    "code-review": {
+      "bytes": 6721,
+      "license": "MIT",
+      "path": "mattpocock__skills/code-review/SKILL.md",
+      "sha256": "9c921a8d88138a41401d8897ca1bb852088ab1b7b605cdd04edc13e3e8aab6dd"
+    },
+    "diagnosing-bugs": {
+      "bytes": 8664,
+      "license": "MIT",
+      "path": "mattpocock__skills/diagnosing-bugs/SKILL.md",
+      "sha256": "849198df88cdb65fd0d97236604c1fca7ff2f22d2f705f9724a800d0266b118d"
+    },
+    "tdd": {
+      "bytes": 3629,
+      "license": "MIT",
+      "path": "mattpocock__skills/tdd/SKILL.md",
+      "sha256": "5505d25bbaa8fc14a79e4d20163936958992a2995b7f1dd1d6197edc9ed722e0"
+    }
+  },
+  "obra/superpowers": {
+    "brainstorming": {
+      "bytes": 13602,
+      "license": "MIT",
+      "path": "obra__superpowers/brainstorming/SKILL.md",
+      "sha256": "61a7ef918652108c76a3fd01e02dd92d39996c6b46d4cb2819cbd03f6c45e46a"
+    },
+    "diagnosing-superpowers": {
+      "bytes": 6941,
+      "license": "MIT",
+      "path": "obra__superpowers/diagnosing-superpowers/SKILL.md",
+      "sha256": "3143de8695c5a2d63e8b1675f33837578076f464deb127c2ebdd0b46fceef886"
+    },
+    "dispatching-parallel-agents": {
+      "bytes": 6078,
+      "license": "MIT",
+      "path": "obra__superpowers/dispatching-parallel-agents/SKILL.md",
+      "sha256": "1968923066f3b707eb01d1992cdf4c42284c3855f70253b9cd5000ff45fca13c"
+    },
+    "executing-plans": {
+      "bytes": 18103,
+      "license": "MIT",
+      "path": "obra__superpowers/executing-plans/SKILL.md",
+      "sha256": "e4649e59880ef2643d1da128e3d607e87e3f969410d72095a5bf65811b6036dc"
+    },
+    "finishing-a-development-branch": {
+      "bytes": 7781,
+      "license": "MIT",
+      "path": "obra__superpowers/finishing-a-development-branch/SKILL.md",
+      "sha256": "8db5a922b242dd4e1bf824cb91c13b3e8d8e8a86d6ceaf7f0774eb9cce909d65"
+    },
+    "receiving-code-review": {
+      "bytes": 6203,
+      "license": "MIT",
+      "path": "obra__superpowers/receiving-code-review/SKILL.md",
+      "sha256": "091df1629510af1b92fc4abd6f96732ebedb4cb2c0f3457e8f2740b0504a2438"
+    },
+    "requesting-code-review": {
+      "bytes": 2974,
+      "license": "MIT",
+      "path": "obra__superpowers/requesting-code-review/SKILL.md",
+      "sha256": "2180e14a448e9410bec88e6646a2d1f0ce7fdd58de27388c1e052e929679d2bc"
+    },
+    "subagent-driven-development": {
+      "bytes": 19506,
+      "license": "MIT",
+      "path": "obra__superpowers/subagent-driven-development/SKILL.md",
+      "sha256": "ba41f697136cba88a7962d60c8e2f97488ba04a8688b1d0fbeb27f6953808e75"
+    },
+    "systematic-debugging": {
+      "bytes": 9530,
+      "license": "MIT",
+      "path": "obra__superpowers/systematic-debugging/SKILL.md",
+      "sha256": "51c6435d98c83c42c96ba7c35725a0b2c376cd487fb1a4e6bd0ddbe7e33ef202"
+    },
+    "test-driven-development": {
+      "bytes": 9578,
+      "license": "MIT",
+      "path": "obra__superpowers/test-driven-development/SKILL.md",
+      "sha256": "64b03fce4aee5a97a93160cea8111f3ba13a17b7c001db4bd5836d67fd10705d"
+    },
+    "using-git-worktrees": {
+      "bytes": 6813,
+      "license": "MIT",
+      "path": "obra__superpowers/using-git-worktrees/SKILL.md",
+      "sha256": "8cfb86f121269e8f7f12361e6795c4f6738828340e28964c9229d365666c9edd"
+    },
+    "using-superpowers": {
+      "bytes": 3192,
+      "license": "MIT",
+      "path": "obra__superpowers/using-superpowers/SKILL.md",
+      "sha256": "82c5c8866ad7f5dd4440ce66bd7806ba48a2f13771beae5cf112e53f08fe36ba"
+    },
+    "verification-before-completion": {
+      "bytes": 3646,
+      "license": "MIT",
+      "path": "obra__superpowers/verification-before-completion/SKILL.md",
+      "sha256": "2befe7fc55bcadaa3d97dd9e8efeb633d2561c0ebe74c5a8b17c4d9e7e4520b3"
+    },
+    "writing-plans": {
+      "bytes": 10335,
+      "license": "MIT",
+      "path": "obra__superpowers/writing-plans/SKILL.md",
+      "sha256": "a6c67c1900064347c2a329990dd3c555657c51c3ec53b259a08aa01a2c26139a"
+    },
+    "writing-skills": {
+      "bytes": 16738,
+      "license": "MIT",
+      "path": "obra__superpowers/writing-skills/SKILL.md",
+      "sha256": "8cb3ac68c6d8c4bb46886b998b09af7989643cab8bd0e46ee86dd62e64546bbe"
+    }
+  },
+  "ultralytics/skills": {
+    "platform-cli": {
+      "bytes": 33667,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/platform-cli/SKILL.md",
+      "sha256": "f3368022d331f6669710020e0d4fac7a12d25861b69b0b8c25b0c9b04ef5c9bd"
+    },
+    "yolo": {
+      "bytes": 8584,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo/SKILL.md",
+      "sha256": "33041841b493f09a1a6c81db25ccd6bec6be3ec6dd7f40a86a21008ea3999094"
+    },
+    "yolo-datasets": {
+      "bytes": 7452,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-datasets/SKILL.md",
+      "sha256": "b38d846942128a8864a8a36c343fea7b5b6bd48512afb821337555ee141ddd46"
+    },
+    "yolo-export": {
+      "bytes": 12663,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-export/SKILL.md",
+      "sha256": "eef596a1a018e57e1845c5063f28648ea476128cf6a189e8202f5d291194ff4c"
+    },
+    "yolo-inference": {
+      "bytes": 9914,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-inference/SKILL.md",
+      "sha256": "bfc5ca862b26c2f5b9efe06330a9e98d8af26b6d408d636a7181f3a4e318174c"
+    },
+    "yolo-models": {
+      "bytes": 8666,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-models/SKILL.md",
+      "sha256": "b6469fb12c3213207ecfdffa1d4d85634d7d8ae61922d7a193edb5f76379999f"
+    },
+    "yolo-training": {
+      "bytes": 11328,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-training/SKILL.md",
+      "sha256": "101987a2af4ac1b4199cf2bbc6fd21a80af0c6b93de09fc843af2d6a88e96623"
+    },
+    "yolo-tuning": {
+      "bytes": 5725,
+      "license": "AGPL-3.0",
+      "path": "ultralytics__skills/yolo-tuning/SKILL.md",
+      "sha256": "192e8a80fed689a5e2c6b19f9894a6ca14f3347fffaaa26ebf23d1b6fb412887"
+    }
+  },
+  "xcrrr/claude-skills": {
+    "dataset-curator": {
+      "bytes": 12796,
+      "license": "MIT",
+      "path": "xcrrr__claude-skills/dataset-curator/SKILL.md",
+      "sha256": "51c76fa204261bbf866da176000d15323bbf7bdf2942a2acdc214db24337a3f6"
+    }
+  }
+}

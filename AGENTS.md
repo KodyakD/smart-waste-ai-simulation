@@ -8,9 +8,13 @@ acceptance check; a change is not done until the check passes.
 
 ## Skills to load (mandatory)
 
-Do not improvise a methodology. Before each phase, open the `SKILL.md` at the
-URL below and follow it. If a skill conflicts with a rule in this file, this
-file wins. If you cannot fetch a skill, stop and say so instead of guessing.
+Do not improvise a methodology. Before each phase, open the `SKILL.md` and
+follow it. If a skill conflicts with a rule in this file, this file wins.
+
+Every skill below is installed in `skills/` — read the local file first, for
+example `skills/obra__superpowers/brainstorming/SKILL.md`. The URLs are only
+for refreshing with `python skills/install.py --refresh`. If a local file is
+missing, run `python skills/install.py` instead of guessing.
 
 | Phase | Skill | URL |
 |---|---|---|

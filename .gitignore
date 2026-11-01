@@ -27,3 +27,6 @@ frontend/.env
 backend/ai/raw/
 backend/ai/datasets/waste/images/
 backend/ai/datasets/waste/labels/
+
+# Upstream has no license file, so these stay local only
+skills/anthropics__skills/
