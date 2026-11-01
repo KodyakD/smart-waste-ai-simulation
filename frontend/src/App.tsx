@@ -138,7 +138,7 @@ function SimulatorPage({ bins, onRefresh, config }: { bins: Bin[]; onRefresh: ()
     <div className="sim-toolbar"><div className="select-wrap"><label htmlFor="bin-select">SELECT VIRTUAL BIN</label><div className="select-control"><Trash2 size={16} /><select id="bin-select" value={selected.id} onChange={event => setSelectedId(event.target.value)}>{bins.map(bin => <option key={bin.id} value={bin.id}>{bin.id} — {bin.name}</option>)}</select><ChevronDown size={15} /></div></div><div className="sim-toolbar-meta"><span><span className="pulse-dot" /> Data source: Python simulator</span><span>Update interval: {config.simulation.interval_seconds} sec</span></div></div>
     <div className="sim-layout">
       <section className="panel visualization-panel"><div className="panel-heading"><div><div className="panel-kicker">LIVE HARDWARE VISUALIZATION</div><h2>Inside the smart bin</h2></div><span className="tiny-chip">{selected.id}</span></div>
-        <ImmersiveBinScene bin={selected} />
+        <ImmersiveBinScene bin={selected} config={config} />
         <SensorReadout bin={selected} />
       </section>
       <div className="sim-side-column"><section className="panel control-panel"><div className="panel-heading"><div><div className="panel-kicker">MANUAL CONTROLS</div><h2>Simulation controls</h2></div><SlidersHorizontal size={18} className="muted-icon" /></div>

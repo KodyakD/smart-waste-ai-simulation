@@ -1,24 +1,25 @@
 import { Radio } from 'lucide-react'
-import type { Bin } from './types'
+import type { AppConfig, Bin } from './types'
 import './immersive-scene.css'
 
 type Props = {
   bin: Bin
+  config: AppConfig
 }
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
-export default function ImmersiveBinScene({ bin }: Props) {
+export default function ImmersiveBinScene({ bin, config }: Props) {
   const fill = clamp(bin.fill_percentage, 0, 100)
-  const surfaceY = 365 - fill * 1.92
+  const surfaceY = 383 - (fill / 100) * 213
   const distance = Math.max(0, bin.distance_cm)
   const safeId = bin.id.replace(/[^a-zA-Z0-9_-]/g, '')
   const clipId = 'waste-front-' + safeId
   const sideClipId = 'waste-side-' + safeId
-  const status = fill >= 90 ? 'Full capacity' : fill >= 70 ? 'Collection soon' : 'Normal operation'
-  const tone = fill >= 90 ? 'critical' : fill >= 70 ? 'warning' : 'healthy'
+  const status = fill >= config.thresholds.full ? 'Full capacity' : fill >= config.thresholds.almost_full ? 'Collection soon' : 'Normal operation'
+  const tone = fill >= config.thresholds.full ? 'critical' : fill >= config.thresholds.almost_full ? 'warning' : 'healthy'
 
   return (
     <section className={'immersive-scene ' + (bin.is_running ? 'scene-running' : 'scene-paused')} aria-label="Interactive virtual garbage bin hardware visualization">
@@ -174,8 +175,8 @@ export default function ImmersiveBinScene({ bin }: Props) {
             </g>
           </svg>
 
-          <div className="scene-axis-label scene-axis-top">EMPTY <span>100 cm</span></div>
-          <div className="scene-axis-label scene-axis-bottom">CAPACITY <span>0 cm</span></div>
+          <div className="scene-axis-label scene-axis-top">EMPTY <span>{bin.capacity_cm.toFixed(1)} cm</span></div>
+          <div className="scene-axis-label scene-axis-bottom">FULL <span>{config.simulation.full_distance_cm.toFixed(1)} cm</span></div>
         </div>
 
         <aside className="scene-instrument-panel">
@@ -197,14 +198,14 @@ export default function ImmersiveBinScene({ bin }: Props) {
 
           <div className="scene-meter">
             <div className="scene-meter-label"><span>Sensor distance</span><strong>{distance.toFixed(1)} <small>cm</small></strong></div>
-            <div className="scene-distance-meter"><span style={{ width: clamp((distance / 100) * 100, 0, 100) + '%' }} /></div>
+            <div className="scene-distance-meter"><span style={{ width: clamp((distance / bin.capacity_cm) * 100, 0, 100) + '%' }} /></div>
             <div className="scene-meter-hints"><span>Near</span><span>Far</span></div>
           </div>
 
           <div className="scene-signal-card">
             <div className="scene-signal-icon"><Radio size={16} /></div>
             <div><strong>Ultrasonic echo</strong><span>Round-trip time estimate</span></div>
-            <span className="scene-signal-value">{(distance * 58.3).toFixed(0)} <small>µs</small></span>
+            <span className="scene-signal-value">{((2 * distance) / config.simulation.speed_of_sound_cm_per_us).toFixed(0)} <small>µs</small></span>
           </div>
 
           <div className="scene-status-card">
