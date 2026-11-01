@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+backend/data/*.db
+backend/storage/uploads/*
+!backend/storage/uploads/.gitkeep
+backend/ai/weights/*.pt
+backend/ai/runs/
+
+# Node
+node_modules/
+dist/
+frontend/.env
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

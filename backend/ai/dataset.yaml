@@ -1,0 +1,12 @@
+path: ./backend/ai/datasets/waste
+train: images/train
+val: images/val
+# Optional but recommended for final reporting:
+test: images/test
+
+names:
+  0: ordinary_waste
+  1: battery
+  2: electronic_waste
+  3: aerosol
+  4: medical_sharp

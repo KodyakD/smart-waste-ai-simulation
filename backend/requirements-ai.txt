@@ -1,0 +1,2 @@
+# Install after the core backend requirements.
+ultralytics>=8.3,<9.0
