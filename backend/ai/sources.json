@@ -1,0 +1,101 @@
+{
+  "target": {
+    "classes": ["ordinary_waste", "battery", "electronic_waste", "aerosol", "medical_sharp"],
+    "output_dir": "datasets/waste"
+  },
+  "sources": [
+    {
+      "id": "synthetic_outdoor",
+      "name": "A synthetic outdoor waste image dataset with YOLO-format annotations",
+      "publisher": "Mendeley Data",
+      "doi": "10.17632/2x69gjbcz6.2",
+      "url": "https://data.mendeley.com/datasets/2x69gjbcz6/2",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "redistributable": true,
+      "format": "yolo",
+      "use": "core",
+      "mendeley": {
+        "dataset_id": "2x69gjbcz6",
+        "version": 2,
+        "folders": {
+          "train_images": "8cfe136c-9fdf-4ad2-9479-0dd15254daf6",
+          "train_labels": "20ad35e8-1438-440f-8694-bb91bdf59bad",
+          "val_images": "31187604-72be-4934-94f8-014fe0360c4b",
+          "val_labels": "71c6314e-a356-4358-981f-045f3453fc4c"
+        }
+      },
+      "source_classes": [
+        "plastic", "paper", "cardboard", "metal", "glass",
+        "organic_waste", "battery_waste", "e_waste", "cloth", "other_waste"
+      ],
+      "class_map": {
+        "plastic": "ordinary_waste",
+        "paper": "ordinary_waste",
+        "cardboard": "ordinary_waste",
+        "metal": "ordinary_waste",
+        "glass": "ordinary_waste",
+        "organic_waste": "ordinary_waste",
+        "cloth": "ordinary_waste",
+        "other_waste": "ordinary_waste",
+        "battery_waste": "battery",
+        "e_waste": "electronic_waste"
+      },
+      "notes": "6,000 images, 21,057 boxes, 640x640, pre-split train/val. Only source here that is both detection-formatted and redistributable."
+    },
+    {
+      "id": "recybat24",
+      "name": "RecyBat24 - lithium-ion batteries in electronic waste",
+      "publisher": "Zenodo",
+      "doi": "10.5281/zenodo.15490523",
+      "url": "https://zenodo.org/records/15490523",
+      "license": "CC BY-NC-ND 4.0",
+      "license_url": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+      "redistributable": false,
+      "format": "ultralytics",
+      "use": "private_eval",
+      "class_map": { "battery": "battery" },
+      "notes": "Non-commercial, no derivatives: a merged/relabelled copy may not be published. Keep as a private held-out evaluation set only. Base archive 262 MB; skip the 2.6 GB augmented copy."
+    },
+    {
+      "id": "taco",
+      "name": "TACO - Trash Annotations in Context",
+      "publisher": "Zenodo",
+      "doi": "10.5281/zenodo.3242434",
+      "url": "https://zenodo.org/records/3242434",
+      "license": "CC BY 4.0 (annotations only)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "redistributable": false,
+      "format": "coco",
+      "use": "excluded",
+      "notes": "715 images, 63 classes, annotations are COCO but images are fetched from Flickr per-annotation and every image has license: null, so per-image rights cannot be verified. Also only 715 images. Excluded from the merged set."
+    },
+    {
+      "id": "medical_waste_4",
+      "name": "Medical-Waste-4.0-Dataset v1.0",
+      "publisher": "Zenodo",
+      "doi": "10.5281/zenodo.7709001",
+      "url": "https://zenodo.org/records/7709001",
+      "license": "other-open (no license text published)",
+      "license_url": "https://zenodo.org/records/7709001",
+      "redistributable": false,
+      "format": "unknown",
+      "use": "blocked",
+      "class_map": { "syringe": "medical_sharp", "needle": "medical_sharp" },
+      "notes": "1.24 GB. Zenodo marks it other-open but publishes no terms, so redistribution is unresolved. It is the only candidate for medical_sharp. Do not merge until the authors state terms."
+    },
+    {
+      "id": "etid",
+      "name": "E-Tadweer Image Dataset (ETID)",
+      "publisher": "Mendeley Data",
+      "doi": "10.17632/bndsgcspbx.1",
+      "url": "https://data.mendeley.com/datasets/bndsgcspbx/1",
+      "license": "CC BY 4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "redistributable": true,
+      "format": "classification",
+      "use": "excluded",
+      "notes": "E-waste kiosk categories, image-level labels only. No bounding boxes, so it cannot be merged into a YOLO detection set without relabelling."
+    }
+  ]
+}

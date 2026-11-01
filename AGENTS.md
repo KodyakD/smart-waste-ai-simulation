@@ -136,19 +136,31 @@ Acceptance: set `SIMULATION_INTERVAL_SECONDS=7` and
 the UI — every label, bar colour, scene status and chart follows, with zero
 frontend edits.
 
-## 2. Datasets (blocked: waiting on links)
+## 2. Datasets
 
-Do not invent, generate or substitute a dataset. Record each one in
-`backend/ai/datasets.md`:
+The sources are resolved and recorded in `backend/ai/datasets.md` and
+`backend/ai/sources.json`. Read both before touching anything AI-related.
 
-| Dataset | URL | License | Classes used | Images | Split |
-|---|---|---|---|---|---|
-| _(pending)_ | | | | | |
+| Source | License | Redistributable | Used |
+|---|---|---|---|
+| Synthetic outdoor waste (Mendeley `2x69gjbcz6` v2) | CC BY 4.0 | yes | core, 6,000 images |
+| RecyBat24 (`10.5281/zenodo.15490523`) | CC BY-NC-ND 4.0 | no | private eval only |
+| TACO (`10.5281/zenodo.3242434`) | per-image license `null` | no | excluded |
+| Medical-Waste-4.0 (`10.5281/zenodo.7709001`) | other-open, no terms | unresolved | blocked |
+| ETID (Mendeley `bndsgcspbx`) | CC BY 4.0 | yes | excluded, no boxes |
 
-Rules: images are never committed; a downloader script may fetch them; the
-class order in `backend/ai/dataset.yaml` must match `config.ai.classes`
-exactly; if the dataset has extra classes, map them explicitly and record the
-mapping.
+Hard rules:
+
+- Never commit images or raw archives. `backend/ai/raw/` and
+  `backend/ai/datasets/waste/{images,labels}/` are gitignored; keep it that way.
+- Never merge a non-redistributable source into the published set. RecyBat24
+  is NC-ND: a relabelled copy is a derivative and cannot be shared.
+- Never claim a class the data does not cover. `aerosol` and `medical_sharp`
+  have no licensed source; the API must report them as unsupported.
+- Class order in `backend/ai/dataset.yaml` must equal
+  `config.ai.classes`; remap with an explicit `class_map`, never by guessing.
+- Any redistribution keeps the CC BY 4.0 attribution and states that classes
+  were remapped 10 -> 5.
 
 ## 3. Alerting must actually work
 

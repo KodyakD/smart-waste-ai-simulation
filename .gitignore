@@ -22,3 +22,8 @@ frontend/.env
 
 # TypeScript build info
 *.tsbuildinfo
+
+# AI datasets: raw downloads and prepared images are never committed
+backend/ai/raw/
+backend/ai/datasets/waste/images/
+backend/ai/datasets/waste/labels/

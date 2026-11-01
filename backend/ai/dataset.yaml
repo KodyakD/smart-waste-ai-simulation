@@ -1,4 +1,4 @@
-path: ./backend/ai/datasets/waste
+path: datasets/waste
 train: images/train
 val: images/val
 # Optional but recommended for final reporting:
