@@ -1,5 +1,6 @@
 from app.config import AI_CLASSES, AI_SUPPORTED_CLASSES, AI_UNSUPPORTED_CLASSES
-from app.main import ai_status, app_config
+from app.main import app_config
+from app.routes.ai import ai_status
 
 
 def test_supported_and_unsupported_classes_partition_target_order():
