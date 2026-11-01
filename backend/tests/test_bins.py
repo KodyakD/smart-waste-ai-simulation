@@ -79,3 +79,45 @@ def test_delete_bin_cascades_readings_and_preserves_alert_history(client):
 def test_patch_and_delete_unknown_bin_return_404(client):
     assert client.patch("/api/v1/bins/MISSING", json={"name": "Unknown"}).status_code == 404
     assert client.delete("/api/v1/bins/MISSING").status_code == 404
+
+
+
+def test_distance_uses_each_bins_capacity_and_updates_after_capacity_change(client):
+    created = client.post("/api/v1/bins", json={
+        "id": "BIN-TALL", "name": "Tall bin", "location": "Zone G",
+        "capacity_cm": 200, "fill_percentage": 50,
+    })
+    assert created.status_code == 201
+    assert created.json()["distance_cm"] == 105
+
+    updated = client.patch("/api/v1/bins/BIN-TALL", json={"capacity_cm": 300})
+    assert updated.status_code == 200
+    assert updated.json()["distance_cm"] == 155
+
+
+def test_capacity_migration_preserves_existing_bin_data(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "legacy.db")
+    with database.connect() as db:
+        db.execute("""
+            CREATE TABLE bins (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                location TEXT NOT NULL,
+                fill_percentage REAL NOT NULL DEFAULT 0,
+                distance_cm REAL NOT NULL DEFAULT 100,
+                status TEXT NOT NULL DEFAULT 'normal',
+                is_running INTEGER NOT NULL DEFAULT 0,
+                last_updated TEXT NOT NULL
+            )
+        """)
+        db.execute(
+            "INSERT INTO bins (id, name, location, fill_percentage, distance_cm, status, is_running, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            ("BIN-OLD", "Legacy", "Zone Old", 40, 64, "normal", 0, database.utc_now()),
+        )
+        db.commit()
+
+    database.init_db()
+    migrated = database.get_bin("BIN-OLD")
+    assert migrated is not None
+    assert migrated["name"] == "Legacy"
+    assert migrated["capacity_cm"] == 100
