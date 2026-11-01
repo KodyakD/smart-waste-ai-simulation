@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from threading import Lock
 from typing import Any
 
 from ..config import AI_CLASSES, BASE_DIR, SETTINGS
@@ -30,20 +31,25 @@ class AIService:
         self.model_path = model_path
         self.model: Any = None
         self.error: str | None = None
-        self._attempted = False
+        self._lock = Lock()
 
     def load(self) -> None:
-        if self._attempted:
+        # model/error are only set once the attempt finished, so a second request
+        # arriving during the torch import blocks on the lock instead of
+        # reporting "not configured" with no message.
+        if self.model is not None or self.error is not None:
             return
-        self._attempted = True
-        if not self.model_path.exists():
-            self.error = "Custom YOLO weights were not found. Train a model and place best.pt in backend/ai/weights/."
-            return
-        try:
-            from ultralytics import YOLO
-            self.model = YOLO(str(self.model_path))
-        except Exception as exc:  # optional dependency or invalid weights
-            self.error = f"Could not load YOLO model: {exc}"
+        with self._lock:
+            if self.model is not None or self.error is not None:
+                return
+            if not self.model_path.exists():
+                self.error = "Custom YOLO weights were not found. Train a model and place best.pt in backend/ai/weights/."
+                return
+            try:
+                from ultralytics import YOLO
+                self.model = YOLO(str(self.model_path))
+            except Exception as exc:  # optional dependency or invalid weights
+                self.error = f"Could not load YOLO model: {exc}"
 
     def status(self) -> dict[str, Any]:
         self.load()
