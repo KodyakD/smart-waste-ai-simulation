@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image, UnidentifiedImageError
 
-from .config import BASE_DIR  # loads backend/.env before other modules read settings
+from .config import AI_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
 from . import database
 from .schemas import FillLevelRequest
 from .services.ai_service import AIService, serialize_bbox
@@ -22,7 +22,7 @@ if not UPLOAD_DIR.is_absolute():
     UPLOAD_DIR = (BASE_DIR / UPLOAD_DIR).resolve()
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-INTERVAL = float(os.getenv("SIMULATION_INTERVAL_SECONDS", "3"))
+INTERVAL = SETTINGS.simulation_interval_seconds
 simulator = SimulationRunner(interval_seconds=INTERVAL)
 ai_service = AIService()
 
@@ -36,7 +36,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="Smart Waste AI Simulation API",
+    title=SETTINGS.app_name,
     description="Software-only virtual garbage-bin simulator and AI waste detection API.",
     version="0.1.0",
     lifespan=lifespan,
@@ -57,12 +57,37 @@ app.add_middleware(
 
 @app.get("/")
 def root() -> dict[str, str]:
-    return {"name": "Smart Waste AI Simulation API", "docs": "/docs", "health": "/api/v1/health"}
+    return {"name": SETTINGS.app_name, "docs": "/docs", "health": "/api/v1/health"}
 
 
 @app.get("/api/v1/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "smart-waste-api"}
+
+
+@app.get("/api/v1/config")
+def app_config() -> dict[str, Any]:
+    return {
+        "simulation": {
+            "interval_seconds": SETTINGS.simulation_interval_seconds,
+            "full_distance_cm": SETTINGS.sensor_full_distance_cm,
+            "speed_of_sound_cm_per_us": SETTINGS.speed_of_sound_cm_per_us,
+            "max_readings": SETTINGS.max_readings,
+        },
+        "thresholds": {
+            "almost_full": SETTINGS.fill_almost_full_threshold,
+            "full": SETTINGS.fill_full_threshold,
+        },
+        "ai": {
+            "configured": ai_service.status()["configured"],
+            "model_path": SETTINGS.ai_model_path,
+            "architecture": "YOLO object detection",
+            "device": SETTINGS.ai_device,
+            "confidence_threshold": SETTINGS.ai_confidence_threshold,
+            "classes": list(AI_CLASSES),
+        },
+        "app": {"name": SETTINGS.app_name, "environment": SETTINGS.app_environment},
+    }
 
 
 @app.get("/api/v1/dashboard")

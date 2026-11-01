@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .config import BASE_DIR
+from .config import BASE_DIR, SETTINGS
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "smart_waste.db")))
 if not DB_PATH.is_absolute():
     DB_PATH = (BASE_DIR / DB_PATH).resolve()
@@ -99,9 +99,9 @@ def init_db() -> None:
 
 
 def status_for_fill(fill: float) -> str:
-    if fill >= 90:
+    if fill >= SETTINGS.fill_full_threshold:
         return "full"
-    if fill >= 70:
+    if fill >= SETTINGS.fill_almost_full_threshold:
         return "almost_full"
     return "normal"
 
@@ -255,7 +255,8 @@ def dashboard_summary() -> dict[str, Any]:
             "SELECT COUNT(*) AS total, AVG(fill_percentage) AS average FROM bins"
         ).fetchone()
         full_bins = db.execute(
-            "SELECT COUNT(*) AS total FROM bins WHERE fill_percentage >= 90"
+            "SELECT COUNT(*) AS total FROM bins WHERE fill_percentage >= ?",
+            (SETTINGS.fill_full_threshold,),
         ).fetchone()["total"]
         active = db.execute(
             "SELECT COUNT(*) AS total FROM bins WHERE is_running = 1"

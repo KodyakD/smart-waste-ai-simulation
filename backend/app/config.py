@@ -1,6 +1,60 @@
+from dataclasses import dataclass
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 load_dotenv(BASE_DIR / ".env", override=False)
+
+
+def _float_setting(name: str, default: float) -> float:
+    value = float(os.getenv(name, str(default)))
+    if value <= 0:
+        raise ValueError(f"{name} must be greater than zero")
+    return value
+
+
+def _int_setting(name: str, default: int) -> int:
+    value = int(os.getenv(name, str(default)))
+    if value < 1:
+        raise ValueError(f"{name} must be at least one")
+    return value
+
+
+@dataclass(frozen=True)
+class RuntimeSettings:
+    simulation_interval_seconds: float
+    fill_almost_full_threshold: float
+    fill_full_threshold: float
+    sensor_full_distance_cm: float
+    speed_of_sound_cm_per_us: float
+    max_readings: int
+    ai_confidence_threshold: float
+    ai_model_path: str
+    ai_device: str
+    app_name: str
+    app_environment: str
+
+
+SETTINGS = RuntimeSettings(
+    simulation_interval_seconds=_float_setting("SIMULATION_INTERVAL_SECONDS", 3),
+    fill_almost_full_threshold=_float_setting("FILL_ALMOST_FULL_THRESHOLD", 70),
+    fill_full_threshold=_float_setting("FILL_FULL_THRESHOLD", 90),
+    sensor_full_distance_cm=_float_setting("SENSOR_FULL_DISTANCE_CM", 10),
+    speed_of_sound_cm_per_us=_float_setting("SPEED_OF_SOUND_CM_PER_US", 0.0343),
+    max_readings=_int_setting("MAX_READINGS", 48),
+    ai_confidence_threshold=_float_setting("AI_CONFIDENCE_THRESHOLD", 0.35),
+    ai_model_path=os.getenv("YOLO_MODEL_PATH", "backend/ai/weights/best.pt"),
+    ai_device=os.getenv("AI_DEVICE", "cpu"),
+    app_name=os.getenv("APP_NAME", "EcoMind"),
+    app_environment=os.getenv("APP_ENVIRONMENT", "Local instance"),
+)
+
+AI_CLASSES = (
+    "ordinary_waste",
+    "battery",
+    "electronic_waste",
+    "aerosol",
+    "medical_sharp",
+)
