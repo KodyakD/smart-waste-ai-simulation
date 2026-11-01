@@ -104,16 +104,26 @@ def evaluate(weights: Path) -> int:
         return 1
 
     model = YOLO(str(weights))
-    metrics = model.val(data=str(runtime_data()), split="test", imgsz=640, plots=True)
+    metrics = model.val(
+        data=str(runtime_data()),
+        split="test",
+        imgsz=640,
+        plots=True,
+        project=str(RUNS),
+        name="test-eval",
+    )
     names: dict[int, str] = model.names
     rows = []
     for index, name in names.items():
+        # Ultralytics only reports classes that appear in the split, so index by
+        # position in metrics.box.ap rather than by class id.
+        has_data = index < len(metrics.box.ap)
         rows.append({
             "class": name,
-            "precision": float(metrics.box.p[index]),
-            "recall": float(metrics.box.r[index]),
-            "mAP50": float(metrics.box.ap50[index]),
-            "mAP50-95": float(metrics.box.ap[index]),
+            "precision": float(metrics.box.p[index]) if has_data else None,
+            "recall": float(metrics.box.r[index]) if has_data else None,
+            "mAP50": float(metrics.box.ap50[index]) if has_data else None,
+            "mAP50-95": float(metrics.box.ap[index]) if has_data else None,
         })
 
     lines = [
@@ -126,6 +136,9 @@ def evaluate(weights: Path) -> int:
         "|---|---:|---:|---:|---:|",
     ]
     for row in rows:
+        if row["mAP50"] is None:
+            lines.append(f"| {row['class']} | — | — | — | — |")
+            continue
         lines.append(
             f"| {row['class']} | {row['precision']:.3f} | {row['recall']:.3f} | "
             f"{row['mAP50']:.3f} | {row['mAP50-95']:.3f} |"
@@ -134,7 +147,8 @@ def evaluate(weights: Path) -> int:
         "",
         f"All classes: mAP50 **{float(metrics.box.map50):.3f}**, mAP50-95 **{float(metrics.box.map):.3f}**",
         "",
-        "Classes with zero instances report 0.0 — that is missing data, not a model failure.",
+        "Classes with no instances in the test split show — — that is missing data,",
+        "not a model failure. Do not report a metric for them.",
         "RecyBat24 (CC BY-NC-ND) is not part of this test split; it may only be used for",
         "private evaluation and its numbers must be reported separately.",
         "",
