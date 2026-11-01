@@ -152,9 +152,10 @@ def _reset_output() -> None:
     for split in SPLITS:
         for kind in ("images", "labels"):
             directory = OUT_DIR / kind / split
-            if directory.exists():
-                shutil.rmtree(directory)
             directory.mkdir(parents=True, exist_ok=True)
+            for existing in directory.iterdir():
+                if existing.name != ".gitkeep":
+                    existing.unlink()
 
 
 def prepare() -> dict[str, int]:
