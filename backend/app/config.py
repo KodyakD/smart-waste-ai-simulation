@@ -67,3 +67,13 @@ AI_CLASSES = (
     "aerosol",
     "medical_sharp",
 )
+
+AI_SUPPORTED_CLASSES = (
+    "ordinary_waste",
+    "battery",
+    "electronic_waste",
+)
+AI_UNSUPPORTED_CLASSES = tuple(
+    class_name for class_name in AI_CLASSES
+    if class_name not in AI_SUPPORTED_CLASSES
+)

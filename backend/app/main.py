@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image, UnidentifiedImageError
 
-from .config import AI_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
+from .config import AI_CLASSES, AI_SUPPORTED_CLASSES, AI_UNSUPPORTED_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
 from . import database
 from .schemas import BinCreateRequest, BinUpdateRequest, FillLevelRequest
 from .services.ai_service import AIService, serialize_bbox
@@ -86,6 +86,8 @@ def app_config() -> dict[str, Any]:
             "device": SETTINGS.ai_device,
             "confidence_threshold": SETTINGS.ai_confidence_threshold,
             "classes": list(AI_CLASSES),
+            "supported_classes": list(AI_SUPPORTED_CLASSES),
+            "unsupported_classes": list(AI_UNSUPPORTED_CLASSES),
         },
         "app": {"name": SETTINGS.app_name, "environment": SETTINGS.app_environment},
     }
@@ -209,7 +211,12 @@ def detections(limit: int = 30) -> list[dict[str, Any]]:
 
 @app.get("/api/v1/ai/status")
 def ai_status() -> dict[str, Any]:
-    return ai_service.status()
+    return {
+        **ai_service.status(),
+        "classes": list(AI_CLASSES),
+        "supported_classes": list(AI_SUPPORTED_CLASSES),
+        "unsupported_classes": list(AI_UNSUPPORTED_CLASSES),
+    }
 
 
 @app.post("/api/v1/ai/detect")
@@ -254,6 +261,8 @@ async def detect_waste(file: UploadFile = File(...)) -> dict[str, Any]:
 
     saved = []
     for prediction in predictions:
+        if prediction["class_name"] in AI_UNSUPPORTED_CLASSES:
+            prediction["risk_level"] = "needs_review"
         saved.append(database.create_detection(
             filename=stored_name,
             original_filename=safe_name,
