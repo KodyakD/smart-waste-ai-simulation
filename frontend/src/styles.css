@@ -32,3 +32,17 @@
 .device-payload pre{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#d8eee0}
 @media(max-width:900px){.control-panel{grid-template-columns:minmax(0,1fr)}.control-panel>.panel-heading,.control-panel>.level-control,.control-panel>.control-actions,.control-panel>.inline-feedback,.control-panel>.control-note{grid-column:1}.device-telemetry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.device-telemetry-grid{grid-template-columns:1fr}}
+
+.bin-form-panel{margin-bottom:16px}
+.bin-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.bin-form-grid label{display:flex;flex-direction:column;gap:6px;color:#78877d;font-size:9px;font-weight:700}
+.bin-form-grid input,.bins-management-table input{width:100%;min-width:90px;border:1px solid #dfe8e1;border-radius:7px;padding:9px 10px;background:#fbfdfb;color:#31473a;font:inherit;font-size:11px}
+.bin-form-grid input:focus,.bins-management-table input:focus{outline:2px solid #b8d9c2;border-color:#6ba982}
+.form-actions,.table-actions{display:flex;align-items:center;gap:7px}
+.form-actions{margin-top:16px}
+.table-actions{justify-content:flex-end}
+.bins-management-table{min-width:820px}
+.bins-management-table td:last-child{text-align:right}
+.bins-management-panel .empty-state .button{margin-top:12px}
+@media(max-width:900px){.bin-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.bin-form-grid{grid-template-columns:minmax(0,1fr)}}
