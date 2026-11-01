@@ -93,6 +93,23 @@ Paste this with the repo when handing the work to another model:
 > the dataset links before touching the AI model — never invent a dataset or
 > sample images.
 
+## Shared branch protocol
+
+`main` is shared with other agents working at the same time. Follow this or you
+will overwrite someone else's work.
+
+- Pull before you start: `git pull --rebase`.
+- Push with `git pull --rebase && git push`. If the push is rejected, rebase
+  and retry. **Never** `git push --force` and never rewrite published commits.
+- Small commits, one concern each. A rebase conflict should be rare and small.
+- Change only the files your task needs. Do not reformat, re-sort imports or
+  "clean up" files you were not asked to touch — that is how parallel work gets
+  clobbered.
+- In a conflict, keep both intents. Never resolve with `--ours` / `--theirs` or
+  `git rebase --skip` to make it go away.
+- If a file you need is already being edited elsewhere (check `git log -5
+  --name-only`), say so before editing it.
+
 ## 0. Definition of done
 
 - `cd frontend && npm run build` passes (`tsc -b` is part of it — no unused
