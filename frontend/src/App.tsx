@@ -7,6 +7,7 @@ import {
   Sparkles, Trash2, Upload, Wifi, X, Zap,
 } from 'lucide-react'
 import { api } from './api'
+import ImmersiveBinScene from './ImmersiveBinScene'
 import type { AIStatus, Alert as AlertItem, Bin, DashboardSummary, Detection, Reading } from './types'
 
 const NAV_ITEMS = [
@@ -69,45 +70,6 @@ function StatCard({ label, value, suffix, note, icon: Icon, tone = 'green', tren
 function FillBar({ value }: { value: number }) {
   const tone = value >= 90 ? 'red' : value >= 70 ? 'amber' : 'green'
   return <div className="fill-track"><div className={`fill-value ${tone}`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>
-}
-
-function BinGlyph({ fill, large = false }: { fill: number; large?: boolean }) {
-  const safe = Math.max(0, Math.min(100, fill))
-  const fillTop = 190 - safe * 1.28
-  const clipId = large ? 'binClipLarge' : 'binClipSmall'
-  return <svg className={`bin-glyph ${large ? 'bin-glyph-large' : ''}`} viewBox="0 0 220 220" role="img" aria-label={`Virtual garbage bin ${safe}% full`}>
-    <defs>
-      <linearGradient id="glass" x1="0" x2="1"><stop offset="0" stopColor="#c9d8d2" stopOpacity=".28" /><stop offset=".5" stopColor="#fff" stopOpacity=".52" /><stop offset="1" stopColor="#a6beb4" stopOpacity=".24" /></linearGradient>
-      <linearGradient id="waste" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#bd956b" /><stop offset="1" stopColor="#806344" /></linearGradient>
-      <clipPath id={clipId}><path d="M45 48 L175 48 L164 194 Q162 202 153 202 L67 202 Q58 202 56 194 Z" /></clipPath>
-    </defs>
-    <ellipse cx="110" cy="207" rx="76" ry="8" fill="#172d25" opacity=".08" />
-    <rect x="82" y="12" width="56" height="13" rx="5" fill="#253e35" />
-    <rect x="88" y="24" width="44" height="9" rx="3" fill="#64796f" />
-    <rect x="91" y="34" width="38" height="17" rx="5" fill="#1f5747" />
-    <circle cx="101" cy="42" r="3" fill="#63d7a5" />
-    <circle cx="119" cy="42" r="3" fill="#65a2ed" />
-    <path d="M110 52 L110 66 M101 55 L97 68 M119 55 L123 68" stroke="#31a47b" strokeWidth="2" strokeDasharray="3 3" fill="none" className="sensor-beam" />
-    <path d="M87 68 Q110 52 133 68 M79 77 Q110 51 141 77" stroke="#42b991" strokeWidth="1.6" strokeDasharray="4 4" fill="none" opacity=".65" className="sensor-wave" />
-    <path d="M39 47 Q110 36 181 47 L177 55 Q110 65 43 55 Z" fill="#465f54" />
-    <path d="M45 48 L175 48 L164 194 Q162 202 153 202 L67 202 Q58 202 56 194 Z" fill="url(#glass)" stroke="#78968a" strokeWidth="2.5" />
-    <g clipPath={`url(#${clipId})`}>
-      <rect x="48" y={fillTop} width="124" height={194 - fillTop + 15} fill="url(#waste)" />
-      <path d={`M48 ${fillTop + 3} Q70 ${fillTop - 5} 90 ${fillTop + 2} T132 ${fillTop} T174 ${fillTop + 1}`} stroke="#6d533b" strokeWidth="2" fill="none" />
-      <g fill="#e1c49b" opacity=".9">
-        <rect x="66" y={Math.max(fillTop + 10, 76)} width="21" height="12" rx="3" transform={`rotate(-16 66 ${Math.max(fillTop + 10, 76)})`} />
-        <rect x="113" y={Math.max(fillTop + 22, 91)} width="28" height="11" rx="4" transform={`rotate(12 113 ${Math.max(fillTop + 22, 91)})`} />
-        <rect x="145" y={Math.max(fillTop + 4, 76)} width="17" height="15" rx="4" transform={`rotate(-22 145 ${Math.max(fillTop + 4, 76)})`} />
-      </g>
-      <g fill="#52695d" opacity=".85">
-        <circle cx="87" cy={Math.max(fillTop + 18, 92)} r="6" /><rect x="94" y={Math.max(fillTop + 5, 78)} width="9" height="18" rx="3" transform="rotate(24 94 78)" />
-      </g>
-    </g>
-    <path d="M56 61 L64 187" stroke="#fff" strokeWidth="4" opacity=".45" strokeLinecap="round" />
-    <path d="M165 63 L158 188" stroke="#56766a" strokeWidth="2" opacity=".35" strokeLinecap="round" />
-    <path d="M73 203 L68 210 M147 203 L152 210" stroke="#334f43" strokeWidth="5" strokeLinecap="round" />
-    <text x="110" y="183" fill="#fff" fontSize="12" fontWeight="700" textAnchor="middle" opacity={safe > 17 ? '.9' : '0'}>{Math.round(safe)}%</text>
-  </svg>
 }
 
 function SensorBoard() {
@@ -177,8 +139,7 @@ function SimulatorPage({ bins, onRefresh }: { bins: Bin[]; onRefresh: () => Prom
     <div className="sim-toolbar"><div className="select-wrap"><label htmlFor="bin-select">SELECT VIRTUAL BIN</label><div className="select-control"><Trash2 size={16} /><select id="bin-select" value={selected.id} onChange={event => setSelectedId(event.target.value)}>{bins.map(bin => <option key={bin.id} value={bin.id}>{bin.id} — {bin.name}</option>)}</select><ChevronDown size={15} /></div></div><div className="sim-toolbar-meta"><span><span className="pulse-dot" /> Data source: Python simulator</span><span>Update interval: 3 sec</span></div></div>
     <div className="sim-layout">
       <section className="panel visualization-panel"><div className="panel-heading"><div><div className="panel-kicker">LIVE HARDWARE VISUALIZATION</div><h2>Inside the smart bin</h2></div><span className="tiny-chip">{selected.id}</span></div>
-        <div className="visual-stage"><div className="visual-grid-lines" /><div className="stage-sensor-label"><Radio size={14} /><span>HC-SR04 SENSOR</span><i /></div><BinGlyph fill={selected.fill_percentage} large /><div className="stage-distance-line"><span /><small>{selected.distance_cm.toFixed(1)} cm</small><span /></div><div className="stage-label-bottom">VIRTUAL BIN · {selected.location.toUpperCase()}</div></div>
-        <div className="visual-legend"><span><i className="legend-waste" /> Waste volume</span><span><i className="legend-wave" /> Ultrasonic pulse path</span><span><i className="legend-glass" /> Bin body</span></div>
+        <ImmersiveBinScene bin={selected} />
         <SensorReadout bin={selected} />
       </section>
       <div className="sim-side-column"><SensorBoard /><section className="panel control-panel"><div className="panel-heading"><div><div className="panel-kicker">MANUAL CONTROLS</div><h2>Simulation controls</h2></div><SlidersHorizontal size={18} className="muted-icon" /></div>
