@@ -32,6 +32,28 @@ Hugging Face `pictograph/taco` copy is TACO. They are not extra datasets.
   `other-open` with empty rights metadata. It is the only candidate for
   `medical_sharp`, so that class stays empty until the authors state terms.
 
+## Result (built 2026-11-01)
+
+| Split | Images | Boxes | ordinary | battery | e-waste | aerosol | medical |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| train | 4,988 | 17,480 | 13,901 | 1,769 | 1,810 | 0 | 0 |
+| val | 463 | 1,622 | 1,300 | 174 | 148 | 0 | 0 |
+| test | 542 | 1,931 | 1,547 | 213 | 171 | 0 | 0 |
+| **total** | **5,993** | **21,033** | 16,748 | 2,156 | 2,129 | 0 | 0 |
+
+`--check` reports 0 errors: every image has a label, every line has 5 fields,
+all class ids are in range, all coordinates in `[0,1]`.
+
+Two things the build fixed that the source ships broken:
+
+- **The source's val split leaks into train.** All 1,200 val images and 5,530
+  train images overlap by 730 byte-identical files — 61% of val. Reporting
+  metrics on that val set would be inflated. SHA-256 dedupe keeps the train
+  copy and drops the val copy, so the 463 val images left are genuinely unseen.
+- **10 images have empty label files** (no boxes after remapping) and are
+  dropped rather than kept as background images, since nothing else in the
+  pipeline declares them as negatives.
+
 ## Consequence for the model
 
 After the merge the dataset covers three of the five target classes:
