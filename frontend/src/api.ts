@@ -1,4 +1,4 @@
-import type { AIStatus, Alert, AppConfig, Bin, DashboardSummary, Detection, Reading } from './types'
+import type { AIStatus, Alert, AppConfig, Bin, CreateBinInput, DashboardSummary, Detection, Reading, UpdateBinInput } from './types'
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '')
 
@@ -26,6 +26,9 @@ export const api = {
   config: () => request<AppConfig>('/config'),
   dashboard: () => request<DashboardSummary>('/dashboard'),
   bins: () => request<Bin[]>('/bins'),
+  createBin: (payload: CreateBinInput) => request<Bin>('/bins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  updateBin: (id: string, payload: UpdateBinInput) => request<Bin>(`/bins/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  deleteBin: (id: string) => request<void>(`/bins/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   readings: (id: string, limit: number) => request<Reading[]>(`/bins/${encodeURIComponent(id)}/readings?limit=${limit}`),
   alerts: () => request<Alert[]>('/alerts?limit=50'),
   detections: () => request<Detection[]>('/detections?limit=50'),

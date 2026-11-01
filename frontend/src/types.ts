@@ -19,10 +19,25 @@ export interface AppConfig {
   app: { name: string; environment: string }
 }
 
+export interface CreateBinInput {
+  id: string
+  name: string
+  location: string
+  capacity_cm: number
+  fill_percentage?: number
+}
+
+export interface UpdateBinInput {
+  name?: string
+  location?: string
+  capacity_cm?: number
+}
+
 export interface Bin {
   id: string
   name: string
   location: string
+  capacity_cm: number
   fill_percentage: number
   distance_cm: number
   status: BinStatus

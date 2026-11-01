@@ -9,11 +9,13 @@ import {
 import { api } from './api'
 import { useConfig } from './ConfigContext'
 import ImmersiveBinScene from './ImmersiveBinScene'
+import BinsPage from './pages/BinsPage'
 import type { AIStatus, Alert as AlertItem, AppConfig, Bin, DashboardSummary, Detection, Reading } from './types'
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'WORKSPACE' },
   { id: 'simulator', label: 'IoT simulator', icon: Radio, group: 'WORKSPACE' },
+  { id: 'bins', label: 'Bins', icon: Trash2, group: 'WORKSPACE' },
   { id: 'ai', label: 'AI waste detection', icon: ScanSearch, group: 'INTELLIGENCE' },
   { id: 'activity', label: 'Alerts & activity', icon: Bell, group: 'INTELLIGENCE' },
   { id: 'settings', label: 'Project settings', icon: Settings2, group: 'SYSTEM' },
@@ -273,6 +275,7 @@ export default function App() {
     {backendError && <div className="error-box backend-error">{backendError}</div>}
     {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} loading={loading} config={config} />}
     {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} />}
+    {page === 'bins' && <BinsPage bins={bins} onRefresh={refresh} />}
     {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
     {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} />}
     {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} config={config} />}
