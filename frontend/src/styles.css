@@ -3,3 +3,32 @@
 @media(max-width:1150px){.main-content{padding:28px 25px 18px}.topbar{padding:0 25px}.stats-grid{grid-template-columns:repeat(2,1fr)}.overview-grid{grid-template-columns:1fr 1fr}.sim-layout{grid-template-columns:1fr}.sim-side-column{display:grid;grid-template-columns:1fr 1fr;align-items:stretch}.visual-stage{height:340px}}
 @media(max-width:800px){.sidebar{transform:translateX(-100%);transition:transform .22s ease;box-shadow:12px 0 35px rgba(20,40,27,.08)}.sidebar.sidebar-open{transform:translateX(0)}.mobile-scrim{display:block}.mobile-close{display:grid;margin-left:auto}.main-shell{margin-left:0}.menu-trigger{display:grid}.topbar{height:62px;padding:0 18px}.topbar-left{gap:10px}.main-content{padding:25px 18px 18px}.overview-grid,.bottom-grid,.ai-layout,.settings-grid{grid-template-columns:1fr}.page-intro{align-items:flex-start;flex-direction:column}.page-intro h1{font-size:24px}.intro-action{align-self:flex-start}.sim-side-column{grid-template-columns:1fr}.sim-toolbar{align-items:flex-start;flex-direction:column;gap:12px}.sim-toolbar-meta{flex-wrap:wrap;gap:10px}.visual-stage{height:330px}.app-footer{gap:8px;flex-wrap:wrap}.topbar-right{gap:9px}.connection-pill{font-size:0;gap:0}.connection-pill .pulse-dot{width:8px;height:8px}.topbar-divider{display:none}}
 @media(max-width:480px){.main-content{padding:21px 13px 14px}.topbar{padding:0 12px}.breadcrumb{font-size:10px}.stats-grid{gap:9px}.stat-card{padding:13px}.stat-value{font-size:23px}.stat-note{font-size:8px}.panel{padding:15px}.bin-row{gap:8px}.bin-row-icon{width:31px;height:31px}.bin-row-title{gap:5px}.bin-row-title strong{font-size:10px}.bin-row-title span{font-size:8px}.bin-row-meta{min-width:60px}.visual-stage{height:290px}.bin-glyph-large{width:250px;height:250px}.stage-distance-line{right:7%;top:45%}.readout-foot{font-size:7px}.control-actions{grid-template-columns:1fr}.data-table td{padding:10px 7px}.notice-banner{align-items:flex-start}.notice-tag{display:none}.page-intro p{line-height:1.5}.stat-top{font-size:9px}}
+
+/* Simulator: full-width scene followed by controls, device payload and history. */
+.sim-layout{display:flex;flex-direction:column;gap:16px;align-items:stretch}
+.sim-side-column{display:contents}
+.visualization-panel,.control-panel,.telemetry-panel,.device-telemetry-panel{width:100%;min-width:0}
+.control-panel{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.8fr);column-gap:24px;align-items:end}
+.control-panel>.panel-heading{grid-column:1/-1}
+.control-panel>.level-control{grid-column:1}
+.control-panel>.control-actions{grid-column:2;align-self:end}
+.control-panel>.inline-feedback,.control-panel>.control-note{grid-column:1/-1}
+.stat-card-action{appearance:none;text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.activity-row-action{appearance:none;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:transparent;border:0}
+.config-gate{min-height:100vh;display:grid;place-content:center;gap:10px;padding:24px;color:#405348}
+.config-gate p{max-width:460px;color:#78877d}
+.backend-error{margin-bottom:16px}
+.device-telemetry-panel{margin:0 0 16px;padding:18px 20px}
+.device-state{font-size:9px;font-weight:700;border-radius:20px;padding:6px 10px}
+.device-state.running{background:#edf7f0;color:#2e845d}
+.device-state.paused{background:#f2f4f2;color:#718078}
+.device-telemetry-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.device-fact{min-width:0;display:flex;flex-direction:column;gap:6px;padding:12px;background:#f7faf7;border:1px solid #edf2ed;border-radius:8px}
+.device-fact>span{font-size:8px;letter-spacing:.7px;text-transform:uppercase;color:#8b9990;font-weight:700}
+.device-fact>strong{font-size:12px;color:#405448;overflow-wrap:anywhere}
+.device-fact>small{font-size:8px;color:#93a097}
+.device-payload{margin-top:14px;padding:12px;background:#1e3329;border-radius:9px;color:#e7f3eb}
+.device-payload .micro-label{color:#a8c7b3}
+.device-payload pre{margin:8px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;color:#d8eee0}
+@media(max-width:900px){.control-panel{grid-template-columns:minmax(0,1fr)}.control-panel>.panel-heading,.control-panel>.level-control,.control-panel>.control-actions,.control-panel>.inline-feedback,.control-panel>.control-note{grid-column:1}.device-telemetry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.device-telemetry-grid{grid-template-columns:1fr}}

@@ -9,6 +9,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   } catch {
     throw new Error('Cannot reach the backend. Start FastAPI on port 8000 and try again.')
   }
+  if (response.status === 204) return undefined as T
   if (!response.ok) {
     let message = `Request failed (${response.status})`
     try {
