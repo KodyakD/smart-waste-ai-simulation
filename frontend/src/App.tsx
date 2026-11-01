@@ -42,12 +42,12 @@ function BrandMark() {
   return <div className="brand-mark"><Leaf size={19} strokeWidth={2.5} /></div>
 }
 
-function Sidebar({ active, onNavigate, mobileOpen, onClose, unreadAlerts, environment }: { active: PageId; onNavigate: (page: PageId) => void; mobileOpen: boolean; onClose: () => void; unreadAlerts: number; environment: string }) {
+function Sidebar({ active, onNavigate, mobileOpen, onClose, unreadAlerts, environment, appName }: { active: PageId; onNavigate: (page: PageId) => void; mobileOpen: boolean; onClose: () => void; unreadAlerts: number; environment: string; appName: string }) {
   const groups = ['WORKSPACE', 'INTELLIGENCE', 'SYSTEM']
   return <>
     {mobileOpen && <button className="mobile-scrim" onClick={onClose} aria-label="Close menu" />}
     <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
-      <div className="brand-row"><BrandMark /><div><div className="brand-name">ecomind<span>.</span></div><div className="brand-sub">WASTE INTELLIGENCE</div></div><button className="icon-button mobile-close" onClick={onClose}><X size={18} /></button></div>
+      <div className="brand-row"><BrandMark /><div><div className="brand-name">{appName}<span>.</span></div><div className="brand-sub">WASTE INTELLIGENCE</div></div><button className="icon-button mobile-close" onClick={onClose}><X size={18} /></button></div>
       <nav className="side-nav">
         {groups.map(group => <div className="nav-group" key={group}><div className="nav-caption">{group}</div>{NAV_ITEMS.filter(item => item.group === group).map(item => {
           const Icon = item.icon
@@ -212,10 +212,11 @@ export default function App() {
   }, [config])
 
   useEffect(() => { if (!config) return; void refresh(); const timer = window.setInterval(() => void refresh(), config.simulation.interval_seconds * 1000); return () => window.clearInterval(timer) }, [refresh, config])
+  useEffect(() => { if (config) document.title = `${config.app.name} — Smart Waste Simulation` }, [config?.app.name])
 
   if (!config) return <main className="config-gate"><strong>{configLoading ? "Loading application configuration…" : "Configuration unavailable"}</strong><p>{configError || "The backend did not return application configuration."}</p></main>
 
-  return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} environment={config.app.environment} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} onNavigate={setPage} /><div className="main-content">
+  return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} environment={config.app.environment} appName={config.app.name} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} onNavigate={setPage} /><div className="main-content">
     {backendError && <div className="error-box backend-error">{backendError}</div>}
     {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} onNeedCollection={() => { setSimulatorBinId(bins.find(bin => bin.status === 'full')?.id ?? null); setPage('simulator') }} loading={loading} config={config} backendOnline={backendOnline} />}
     {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} initialBinId={simulatorBinId} />}
@@ -223,6 +224,6 @@ export default function App() {
     {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
     {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} backendOnline={backendOnline} />}
     {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} config={config} />}
-    <footer className="app-footer"><span>© 2026 EcoMind Simulation</span><span><span className="footer-dot" /> Last sync {lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>Built for intelligent waste research</span></footer>
+    <footer className="app-footer"><span>© 2026 {config.app.name} Simulation</span><span><span className="footer-dot" /> Last sync {lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>Built for intelligent waste research</span></footer>
   </div></main></div>
 }

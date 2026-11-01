@@ -5,7 +5,7 @@ import type { Bin } from '../types'
 
 type Props = { bins: Bin[]; onRefresh: () => Promise<void>; loading: boolean; backendOnline: boolean }
 
-const emptyDraft = { id: '', name: '', location: '', capacity_cm: '100', fill_percentage: '0' }
+const emptyDraft = { id: '', name: '', location: '', capacity_cm: '', fill_percentage: '0' }
 
 export default function BinsPage({ bins, onRefresh, loading, backendOnline }: Props) {
   const [adding, setAdding] = useState(false)
@@ -90,7 +90,7 @@ export default function BinsPage({ bins, onRefresh, loading, backendOnline }: Pr
             <label>Bin ID<input required pattern="[A-Z0-9-]{3,16}" maxLength={16} value={draft.id} onChange={event => setDraft({ ...draft, id: event.target.value.toUpperCase() })} placeholder="BIN-004" /></label>
             <label>Name<input required maxLength={60} value={draft.name} onChange={event => setDraft({ ...draft, name: event.target.value })} placeholder="North entrance" /></label>
             <label>Location<input required maxLength={60} value={draft.location} onChange={event => setDraft({ ...draft, location: event.target.value })} placeholder="Zone D" /></label>
-            <label>Empty distance (cm)<input required type="number" min="20" max="400" step="0.1" value={draft.capacity_cm} onChange={event => setDraft({ ...draft, capacity_cm: event.target.value })} /></label>
+            <label>Empty distance (cm)<input required type="number" min="20" max="400" step="0.1" value={draft.capacity_cm} onChange={event => setDraft({ ...draft, capacity_cm: event.target.value })} placeholder="Enter empty distance" /></label>
             <label>Initial fill (%)<input required type="number" min="0" max="100" step="0.1" value={draft.fill_percentage} onChange={event => setDraft({ ...draft, fill_percentage: event.target.value })} /></label>
           </div>
           <div className="form-actions"><button className="button button-primary" type="submit" disabled={busy}><Check size={15} /> Create bin</button><button className="button button-ghost" type="button" onClick={() => setAdding(false)}>Cancel</button></div>
