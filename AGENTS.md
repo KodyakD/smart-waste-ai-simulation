@@ -89,7 +89,7 @@ Required contract — `GET /api/v1/config`:
   "simulation": {
     "interval_seconds": 3,
     "full_distance_cm": 10,
-    "speed_of_sound_cm_per_us": 0.01715,
+    "speed_of_sound_cm_per_us": 0.0343,
     "max_readings": 48
   },
   "thresholds": { "almost_full": 70, "full": 90 },
