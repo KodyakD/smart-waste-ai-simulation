@@ -40,35 +40,34 @@ function BrandMark() {
   return <div className="brand-mark"><Leaf size={19} strokeWidth={2.5} /></div>
 }
 
-function Sidebar({ active, onNavigate, mobileOpen, onClose }: { active: PageId; onNavigate: (page: PageId) => void; mobileOpen: boolean; onClose: () => void }) {
+function Sidebar({ active, onNavigate, mobileOpen, onClose, unreadAlerts, environment }: { active: PageId; onNavigate: (page: PageId) => void; mobileOpen: boolean; onClose: () => void; unreadAlerts: number; environment: string }) {
   const groups = ['WORKSPACE', 'INTELLIGENCE', 'SYSTEM']
   return <>
     {mobileOpen && <button className="mobile-scrim" onClick={onClose} aria-label="Close menu" />}
     <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
       <div className="brand-row"><BrandMark /><div><div className="brand-name">ecomind<span>.</span></div><div className="brand-sub">WASTE INTELLIGENCE</div></div><button className="icon-button mobile-close" onClick={onClose}><X size={18} /></button></div>
-      <div className="workspace-switch"><div className="workspace-avatar">EW</div><div className="workspace-copy"><strong>EcoWaste Lab</strong><span>Simulation workspace</span></div><ChevronDown size={15} className="muted-icon" /></div>
       <nav className="side-nav">
         {groups.map(group => <div className="nav-group" key={group}><div className="nav-caption">{group}</div>{NAV_ITEMS.filter(item => item.group === group).map(item => {
           const Icon = item.icon
-          return <button key={item.id} className={`nav-link ${active === item.id ? 'active' : ''}`} onClick={() => { onNavigate(item.id); onClose() }}><Icon size={18} /><span>{item.label}</span>{item.id === 'activity' && <span className="nav-dot" />}</button>
+          return <button key={item.id} className={`nav-link ${active === item.id ? 'active' : ''}`} onClick={() => { onNavigate(item.id); onClose() }}><Icon size={18} /><span>{item.label}</span>{item.id === 'activity' && unreadAlerts > 0 && <span className="nav-count">{unreadAlerts}</span>}</button>
         })}</div>)}
       </nav>
-      <div className="sidebar-bottom"><div className="sidebar-status"><span className="pulse-dot" /><div><strong>Simulation environment</strong><span>Local instance</span></div></div><div className="profile-row"><div className="profile-avatar">K</div><div className="profile-copy"><strong>Project Admin</strong><span>Local administrator</span></div><MoreHorizontal size={18} className="muted-icon" /></div></div>
+      <div className="sidebar-bottom"><div className="sidebar-status"><span className="pulse-dot" /><div><strong>Simulation environment</strong><span>{environment}</span></div></div></div>
     </aside>
   </>
 }
 
-function Topbar({ page, onMenu, backendOnline }: { page: PageId; onMenu: () => void; backendOnline: boolean }) {
+function Topbar({ page, onMenu, backendOnline, unreadAlerts, onNavigate }: { page: PageId; onMenu: () => void; backendOnline: boolean; unreadAlerts: number; onNavigate: (page: PageId) => void }) {
   const item = NAV_ITEMS.find(n => n.id === page)
-  return <header className="topbar"><div className="topbar-left"><button className="icon-button menu-trigger" onClick={onMenu}><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{item?.label || 'Overview'}</strong></div></div><div className="topbar-right"><div className={`connection-pill ${backendOnline ? 'online' : 'offline'}`}><span className="pulse-dot" />{backendOnline ? 'Backend connected' : 'Backend offline'}</div><div className="topbar-divider" /><button className="icon-button top-notice" title="Notifications"><Bell size={18} /><i /></button><div className="top-avatar">KA</div></div></header>
+  return <header className="topbar"><div className="topbar-left"><button className="icon-button menu-trigger" onClick={onMenu}><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{item?.label || 'Overview'}</strong></div></div><div className="topbar-right"><div className={`connection-pill ${backendOnline ? 'online' : 'offline'}`}><span className="pulse-dot" />{backendOnline ? 'Backend connected' : 'Backend offline'}</div><div className="topbar-divider" /><button className="icon-button top-notice" title="Notifications" aria-label={`Open alerts and activity, ${unreadAlerts} unread`} onClick={() => onNavigate('activity')}><Bell size={18} />{unreadAlerts > 0 && <span className="notification-count">{unreadAlerts}</span>}</button></div></header>
 }
 
 function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {
   return <div className="page-intro"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div>{action && <div className="intro-action">{action}</div>}</div>
 }
 
-function StatCard({ label, value, suffix, note, icon: Icon, tone = 'green', trend }: { label: string; value: string | number; suffix?: string; note: string; icon: typeof Activity; tone?: string; trend?: string }) {
-  return <div className="stat-card"><div className="stat-top"><span>{label}</span><span className={`stat-icon ${tone}`}><Icon size={18} /></span></div><div className="stat-value">{value}<small>{suffix}</small></div><div className="stat-foot"><span className="stat-note">{note}</span>{trend && <span className="trend-chip"><ArrowUpRight size={13} />{trend}</span>}</div></div>
+function StatCard({ label, value, suffix, note, icon: Icon, tone = 'green', onClick }: { label: string; value: string | number; suffix?: string; note: string; icon: typeof Activity; tone?: string; onClick: () => void }) {
+  return <button type="button" className="stat-card stat-card-action" onClick={onClick}><span className="stat-top"><span>{label}</span><span className={`stat-icon ${tone}`}><Icon size={18} /></span></span><span className="stat-value">{value}<small>{suffix}</small></span><span className="stat-foot"><span className="stat-note">{note}</span></span></button>
 }
 
 function FillBar({ value, thresholds }: { value: number; thresholds: AppConfig['thresholds'] }) {
