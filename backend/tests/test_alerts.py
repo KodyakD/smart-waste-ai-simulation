@@ -61,7 +61,7 @@ def test_dashboard_unread_count_matches_alert_rows_and_read_is_idempotent(client
 
 
 def test_deleting_bin_keeps_alert_history_with_null_bin_id(client):
-    database.record_reading("BIN-ALERT", 70)
+    database.record_reading("BIN-ALERT", SETTINGS.fill_almost_full_threshold)
     deleted = client.delete("/api/v1/bins/BIN-ALERT")
     assert deleted.status_code == 204
 
