@@ -1,5 +1,24 @@
 export type BinStatus = 'normal' | 'almost_full' | 'full'
 
+export interface AppConfig {
+  simulation: {
+    interval_seconds: number
+    full_distance_cm: number
+    speed_of_sound_cm_per_us: number
+    max_readings: number
+  }
+  thresholds: { almost_full: number; full: number }
+  ai: {
+    configured: boolean
+    model_path: string
+    architecture: string
+    device: string
+    confidence_threshold: number
+    classes: string[]
+  }
+  app: { name: string; environment: string }
+}
+
 export interface Bin {
   id: string
   name: string

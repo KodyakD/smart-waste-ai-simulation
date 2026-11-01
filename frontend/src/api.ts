@@ -1,4 +1,4 @@
-import type { AIStatus, Alert, Bin, DashboardSummary, Detection, Reading } from './types'
+import type { AIStatus, Alert, AppConfig, Bin, DashboardSummary, Detection, Reading } from './types'
 
 const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace(/\/$/, '')
 
@@ -23,9 +23,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<{ status: string }>('/health'),
+  config: () => request<AppConfig>('/config'),
   dashboard: () => request<DashboardSummary>('/dashboard'),
   bins: () => request<Bin[]>('/bins'),
-  readings: (id: string) => request<Reading[]>(`/bins/${id}/readings?limit=48`),
+  readings: (id: string, limit: number) => request<Reading[]>(`/bins/${encodeURIComponent(id)}/readings?limit=${limit}`),
   alerts: () => request<Alert[]>('/alerts?limit=50'),
   detections: () => request<Detection[]>('/detections?limit=50'),
   aiStatus: () => request<AIStatus>('/ai/status'),
