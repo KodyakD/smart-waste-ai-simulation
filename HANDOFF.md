@@ -203,3 +203,23 @@ Do not start. Waiting on the human for dataset links. When they arrive, record
 them in `backend/ai/datasets.md` (URL, license, classes, image count, split),
 map classes to `config.ai.classes` order, and only then touch training. No
 dataset is ever committed to the repo.
+
+
+## Implementation update — 2026-11-01
+
+The user requested the remaining work to be implemented in one run, directly on `main`. Phases 1–8 have now been implemented in commits on `main`:
+
+- Runtime configuration is centralized in `backend/app/config.py` and exposed through `GET /api/v1/config`; the frontend uses a typed config provider.
+- Per-bin `capacity_cm` is added through an idempotent SQLite migration. Bin create, partial update and delete endpoints include validation and preserve alert history on deletion.
+- The Bins management page supports create, edit and confirmed delete, then refreshes from the API.
+- Capacity alerts are generated only on upward threshold crossings, with severity mapped to the threshold.
+- The simulator scene is full width, with controls and telemetry below it. The decorative SensorBoard and fictional ESP32 status artwork have been removed.
+- The device panel displays bin state, backend timestamp, current payload, configured interval, calculated echo time and the software endpoint.
+- Overview metric cards, notification navigation and recent alert rows are wired; fake workspace/profile controls were removed.
+- Regression tests were added in `backend/tests/test_bins.py` and `backend/tests/test_alerts.py`; development test dependencies are listed in `backend/requirements-dev.txt`.
+
+Local verification is still pending. The implementation environment could not clone the repository because outbound GitHub DNS resolution was unavailable, and the user will run `pytest`, `npm run build`, API smoke checks and UI click-through locally. No build or test pass is claimed here.
+
+Phase 9 remains blocked until the user supplies dataset URLs and licenses. No dataset images were generated, downloaded or committed, and the AI inference implementation was not replaced with placeholder predictions.
+
+Process skills applied: brainstorming, writing-plans, spec-driven-development, incremental-implementation, api-and-interface-design, frontend-design, frontend-ui-engineering, systematic-debugging, debugging-and-error-recovery, test-driven-development, webapp-testing, browser-testing-with-devtools, verification-before-completion, code-review-and-quality, code-simplification and security-and-hardening.

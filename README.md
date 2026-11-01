@@ -104,15 +104,15 @@ Only use this local-network setup on a trusted network. The initial prototype is
 4. Use the level slider and **Apply level** to set a specific fill percentage.
 5. Press **Pause** or **Empty bin** to control the virtual bin.
 
-The backend stores readings in SQLite. The virtual ultrasonic distance is calculated using:
+The backend stores readings in SQLite. Each virtual bin stores its own empty-distance calibration in `capacity_cm` (default: 100 cm). The full-distance calibration and simulation thresholds come from the backend environment:
 
 ```text
-empty distance = 100 cm
-full threshold = 10 cm
-distance = 100 - (fill percentage / 100 * 90)
+distance_cm = capacity_cm - (fill_percentage / 100) * (capacity_cm - SENSOR_FULL_DISTANCE_CM)
 ```
 
-The exact values are simulation parameters, not physical measurements.
+Copy `backend/.env.example` to `backend/.env` to configure the simulation. The live values are exposed by `GET /api/v1/config`; the frontend reads that endpoint rather than duplicating thresholds, timing, sensor calibration or AI class names. These are software simulation parameters, not physical measurements.
+
+Use the **Bins** page to create, edit or delete virtual bins. Capacity changes recalculate the current distance, and deleting a bin removes its sensor readings while preserving its alert history.
 
 ## AI model setup (optional next phase)
 
