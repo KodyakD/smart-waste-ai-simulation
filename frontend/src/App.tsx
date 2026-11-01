@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import {
   Activity, AlertOctagon, AlertTriangle, ArrowUpRight, Bell, Camera, Check, ChevronDown,
-  CircleHelp, Cpu, Database, FileImage, Gauge, LayoutDashboard, Leaf, Menu, MoreHorizontal,
+  CircleHelp, Cpu, Database, FileImage, Gauge, LayoutDashboard, Leaf, Menu,
   Pause, Play, Radio, RefreshCw, ScanSearch, Settings2, ShieldAlert, SlidersHorizontal,
   Sparkles, Trash2, Upload, X,
 } from 'lucide-react'
@@ -218,13 +218,18 @@ function AIDetectionPage({ aiStatus, onRefresh, config }: { aiStatus: AIStatus |
   </>
 }
 
-function ActivityPage({ alerts, detections, onRefresh }: { alerts: AlertItem[]; detections: Detection[]; onRefresh: () => Promise<void> }) {
+function ActivityPage({ alerts, detections, onRefresh, backendOnline }: { alerts: AlertItem[]; detections: Detection[]; onRefresh: () => Promise<void>; backendOnline: boolean }) {
   const [tab, setTab] = useState<'alerts' | 'detections'>('alerts')
-  const markRead = async (id: number) => { try { await api.readAlert(id); await onRefresh() } catch { /* surfaced by refresh connection state */ } }
+  const [actionError, setActionError] = useState('')
+  const markRead = async (id: number) => {
+    setActionError('')
+    try { await api.readAlert(id); await onRefresh() }
+    catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Unable to mark alert as read') }
+  }
   return <>
     <PageIntro eyebrow="SYSTEM ACTIVITY" title="Alerts & activity" description="Review capacity warnings, AI risk notifications and previous detection events." />
     <div className="tab-row"><button className={tab === 'alerts' ? 'active' : ''} onClick={() => setTab('alerts')}>Alerts <span>{alerts.length}</span></button><button className={tab === 'detections' ? 'active' : ''} onClick={() => setTab('detections')}>AI detections <span>{detections.length}</span></button></div>
-    <section className="panel full-table-panel">{tab === 'alerts' ? <><div className="panel-heading"><div><div className="panel-kicker">NOTIFICATION CENTER</div><h2>System alerts</h2></div><span className="tiny-chip">{alerts.filter(item => !item.is_read).length} unread</span></div>{alerts.length ? <div className="activity-list expanded">{alerts.map(alert => <div className={`activity-row ${alert.is_read ? 'read' : ''}`} key={alert.id}><div className={`activity-icon ${alert.severity}`}><AlertTriangle size={16} /></div><div className="activity-copy"><div className="activity-title-line"><strong>{alert.title}</strong><span className={`severity-label ${alert.severity}`}>{alert.severity}</span></div><p>{alert.message}</p><span>{alert.bin_name || 'System'} · {new Date(alert.created_at).toLocaleString()}</span></div>{!alert.is_read && <button className="button button-small button-ghost" onClick={() => markRead(alert.id)}><Check size={14} /> Mark read</button>}</div>)}</div> : <EmptyState icon={Bell} title="No alerts recorded" body="Capacity and AI risk alerts will appear here." />}</> : <><div className="panel-heading"><div><div className="panel-kicker">AI HISTORY</div><h2>Waste detections</h2></div><span className="tiny-chip">{detections.length} records</span></div>{detections.length ? <div className="telemetry-table-wrap"><table className="data-table"><thead><tr><th>Detected class</th><th>Confidence</th><th>Risk</th><th>Source image</th><th>Timestamp</th></tr></thead><tbody>{detections.map(detection => <tr key={detection.id}><td><strong>{detection.class_name.replace(/_/g, ' ')}</strong></td><td>{(detection.confidence * 100).toFixed(1)}%</td><td><span className={`risk-pill ${detection.risk_level}`}>{detection.risk_level.replace(/_/g, ' ')}</span></td><td>{detection.original_filename}</td><td>{new Date(detection.created_at).toLocaleString()}</td></tr>)}</tbody></table></div> : <EmptyState icon={ScanSearch} title="No AI detections yet" body="After a custom YOLO model is configured, analyzed images will be listed here." />}</>}</section>
+    <section className="panel full-table-panel">{actionError && <div className="error-box">{actionError}</div>}{!backendOnline ? <EmptyState icon={Bell} title="Backend offline" body="Alert and detection records cannot be refreshed until the backend reconnects." /> : tab === 'alerts' ? <><div className="panel-heading"><div><div className="panel-kicker">NOTIFICATION CENTER</div><h2>System alerts</h2></div><span className="tiny-chip">{alerts.filter(item => !item.is_read).length} unread</span></div>{alerts.length ? <div className="activity-list expanded">{alerts.map(alert => <div className={`activity-row ${alert.is_read ? 'read' : ''}`} key={alert.id}><div className={`activity-icon ${alert.severity}`}><AlertTriangle size={16} /></div><div className="activity-copy"><div className="activity-title-line"><strong>{alert.title}</strong><span className={`severity-label ${alert.severity}`}>{alert.severity}</span></div><p>{alert.message}</p><span>{alert.bin_name || 'System'} · {new Date(alert.created_at).toLocaleString()}</span></div>{!alert.is_read && <button className="button button-small button-ghost" onClick={() => markRead(alert.id)}><Check size={14} /> Mark read</button>}</div>)}</div> : <EmptyState icon={Bell} title="No alerts recorded" body="Capacity and AI risk alerts will appear here." />}</> : <><div className="panel-heading"><div><div className="panel-kicker">AI HISTORY</div><h2>Waste detections</h2></div><span className="tiny-chip">{detections.length} records</span></div>{detections.length ? <div className="telemetry-table-wrap"><table className="data-table"><thead><tr><th>Detected class</th><th>Confidence</th><th>Risk</th><th>Source image</th><th>Timestamp</th></tr></thead><tbody>{detections.map(detection => <tr key={detection.id}><td><strong>{detection.class_name.replace(/_/g, ' ')}</strong></td><td>{(detection.confidence * 100).toFixed(1)}%</td><td><span className={`risk-pill ${detection.risk_level}`}>{detection.risk_level.replace(/_/g, ' ')}</span></td><td>{detection.original_filename}</td><td>{new Date(detection.created_at).toLocaleString()}</td></tr>)}</tbody></table></div> : <EmptyState icon={ScanSearch} title="No AI detections yet" body="After a custom YOLO model is configured, analyzed images will be listed here." />}</>}</section>
   </>
 }
 
@@ -272,13 +277,13 @@ export default function App() {
 
   if (!config) return <main className="config-gate"><strong>{configLoading ? "Loading application configuration…" : "Configuration unavailable"}</strong><p>{configError || "The backend did not return application configuration."}</p></main>
 
-  return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} /><div className="main-content">
+  return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} environment={config.app.environment} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} unreadAlerts={backendOnline ? summary?.unread_alerts ?? 0 : 0} onNavigate={setPage} /><div className="main-content">
     {backendError && <div className="error-box backend-error">{backendError}</div>}
     {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} onNeedCollection={() => { setSimulatorBinId(bins.find(bin => bin.status === 'full')?.id ?? null); setPage('simulator') }} loading={loading} config={config} />}
     {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} initialBinId={simulatorBinId} />}
     {page === 'bins' && <BinsPage bins={bins} onRefresh={refresh} />}
     {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
-    {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} />}
+    {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} backendOnline={backendOnline} />}
     {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} config={config} />}
     <footer className="app-footer"><span>© 2026 EcoMind Simulation</span><span><span className="footer-dot" /> Last sync {lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>Built for intelligent waste research</span></footer>
   </div></main></div>
