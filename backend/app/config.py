@@ -51,6 +51,9 @@ SETTINGS = RuntimeSettings(
     app_environment=os.getenv("APP_ENVIRONMENT", "Local instance"),
 )
 
+if not 0 < SETTINGS.fill_almost_full_threshold < SETTINGS.fill_full_threshold <= 100:
+    raise ValueError("Fill thresholds must satisfy 0 < almost_full < full <= 100")
+
 AI_CLASSES = (
     "ordinary_waste",
     "battery",

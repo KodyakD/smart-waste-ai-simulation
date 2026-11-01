@@ -7,6 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from .config import BASE_DIR, SETTINGS
+
+ALERT_THRESHOLDS = (
+    (SETTINGS.fill_almost_full_threshold, 'medium', 'almost full'),
+    (SETTINGS.fill_full_threshold, 'high', 'full'),
+)
 DB_PATH = Path(os.getenv("DATABASE_PATH", str(BASE_DIR / "data" / "smart_waste.db")))
 if not DB_PATH.is_absolute():
     DB_PATH = (BASE_DIR / DB_PATH).resolve()
@@ -168,17 +173,19 @@ def record_reading(bin_id: str, fill: float) -> dict[str, Any] | None:
                VALUES (?, ?, ?, ?, ?)""",
             (bin_id, fill, distance, status, now),
         )
-        if previous_fill < 90 <= fill:
-            db.execute(
-                """INSERT INTO alerts (bin_id, severity, title, message, created_at)
-                   VALUES (?, 'high', ?, ?, ?)""",
-                (
-                    bin_id,
-                    f"{current['name']} is full",
-                    f"{current['name']} has reached {fill:.0f}% capacity. Collection is recommended.",
-                    now,
-                ),
-            )
+        for threshold, severity, label in ALERT_THRESHOLDS:
+            if previous_fill < threshold <= fill:
+                db.execute(
+                    """INSERT INTO alerts (bin_id, severity, title, message, created_at)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (
+                        bin_id,
+                        severity,
+                        f"{current['name']} is {label}",
+                        f"{current['name']} crossed the {threshold:g}% fill threshold. Collection is recommended.",
+                        now,
+                    ),
+                )
         db.commit()
     return get_bin(bin_id)
 
