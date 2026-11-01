@@ -92,35 +92,35 @@ function MiniChart({ readings }: { readings: Reading[] }) {
   return <svg className="history-chart" viewBox="0 0 400 130" preserveAspectRatio="none" aria-label="Garbage fill history chart"><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2ba77a" stopOpacity=".22" /><stop offset="1" stopColor="#2ba77a" stopOpacity="0" /></linearGradient></defs>{[20,67,114].map(y => <line key={y} x1="12" x2="388" y1={y} y2={y} stroke="#e8eee9" strokeDasharray="4 5" />)}<polygon points={area} fill="url(#chartFill)" /><polyline points={line} fill="none" stroke="#25966c" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />{points.length > 0 && <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="4" fill="#fff" stroke="#25966c" strokeWidth="2.5" />}</svg>
 }
 
-function OverviewPage({ summary, bins, alerts, readings, onNavigate, loading, config }: { summary: DashboardSummary | null; bins: Bin[]; alerts: AlertItem[]; readings: Reading[]; onNavigate: (page: PageId) => void; loading: boolean; config: AppConfig }) {
+function OverviewPage({ summary, bins, alerts, readings, onNavigate, onNeedCollection, loading, config }: { summary: DashboardSummary | null; bins: Bin[]; alerts: AlertItem[]; readings: Reading[]; onNavigate: (page: PageId) => void; onNeedCollection: () => void; loading: boolean; config: AppConfig }) {
   return <>
     <PageIntro eyebrow="MONITORING OVERVIEW" title="Monitoring overview" description="A live view of your virtual waste network and system activity." action={<button className="button button-secondary" onClick={() => onNavigate('simulator')}><SlidersHorizontal size={16} /> Open simulator</button>} />
     <div className="stats-grid">
-      <StatCard label="Virtual bins" value={summary?.total_bins ?? '—'} note="Current network" icon={Trash2} tone="green" />
-      <StatCard label="Average fill level" value={summary?.average_fill ?? '—'} suffix="%" note="Network-wide capacity" icon={Gauge} tone="blue" />
-      <StatCard label="Bins need collection" value={summary?.full_bins ?? '—'} note={`At ${config.thresholds.full}% capacity or above`} icon={AlertOctagon} tone="amber" />
-      <StatCard label="Unread alerts" value={summary?.unread_alerts ?? '—'} note="Requires attention" icon={Bell} tone="rose" />
+      <StatCard label="Virtual bins" value={summary?.total_bins ?? '—'} note="Current network" icon={Trash2} tone="green" onClick={() => onNavigate('bins')} />
+      <StatCard label="Average fill level" value={summary?.average_fill ?? '—'} suffix="%" note="Network-wide capacity" icon={Gauge} tone="blue" onClick={() => onNavigate('simulator')} />
+      <StatCard label="Bins need collection" value={summary?.full_bins ?? '—'} note={`At ${config.thresholds.full}% capacity or above`} icon={AlertOctagon} tone="amber" onClick={onNeedCollection} />
+      <StatCard label="Unread alerts" value={summary?.unread_alerts ?? '—'} note="Requires attention" icon={Bell} tone="rose" onClick={() => onNavigate('activity')} />
     </div>
     <div className="content-grid overview-grid">
       <section className="panel bins-panel"><div className="panel-heading"><div><div className="panel-kicker">NETWORK STATUS</div><h2>Virtual bin network</h2></div><button className="text-button" onClick={() => onNavigate('simulator')}>View simulator <ArrowUpRight size={14} /></button></div>
         {loading && !bins.length ? <div className="panel-loading">Loading virtual bins…</div> : <div className="bin-list">{bins.map(bin => <div className="bin-row" key={bin.id}><div className="bin-row-icon"><Trash2 size={18} /></div><div className="bin-row-main"><div className="bin-row-title"><strong>{bin.name}</strong><span>{bin.id}</span></div><div className="bin-row-location">{bin.location}</div><FillBar value={bin.fill_percentage} thresholds={config.thresholds} /></div><div className="bin-row-meta"><strong>{Math.round(bin.fill_percentage)}%</strong><span className={`status-tag ${bin.status}`}>{statusLabel(bin.status)}</span></div></div>)}</div>}
       </section>
       <section className="panel activity-panel"><div className="panel-heading"><div><div className="panel-kicker">LATEST EVENTS</div><h2>Recent alerts</h2></div><button className="icon-button subtle" onClick={() => onNavigate('activity')}><ArrowUpRight size={17} /></button></div>
-        {alerts.length === 0 ? <EmptyState icon={Bell} title="You're all caught up" body="New capacity and AI risk alerts will appear here." /> : <div className="activity-list">{alerts.slice(0, 4).map(alert => <div className="activity-row" key={alert.id}><div className={`activity-icon ${alert.severity}`}><AlertTriangle size={16} /></div><div className="activity-copy"><strong>{alert.title}</strong><p>{alert.message}</p><span>{timeAgo(alert.created_at)}</span></div></div>)}</div>}
+        {alerts.length === 0 ? <EmptyState icon={Bell} title="No alerts recorded" body="New alerts appear here after a configured threshold crossing or a saved AI detection." /> : <div className="activity-list">{alerts.slice(0, 4).map(alert => <button type="button" className="activity-row activity-row-action" key={alert.id} onClick={() => onNavigate('activity')}><div className={`activity-icon ${alert.severity}`}><AlertTriangle size={16} /></div><div className="activity-copy"><strong>{alert.title}</strong><p>{alert.message}</p><span>{timeAgo(alert.created_at)}</span></div></button>)}</div>}
       </section>
     </div>
     <div className="content-grid bottom-grid"><section className="panel chart-panel"><div className="panel-heading"><div><div className="panel-kicker">SIMULATED TELEMETRY</div><h2>Fill-level activity</h2></div><span className="chart-legend"><i /> Fill level</span></div><MiniChart readings={readings} /><div className="chart-axis"><span>Older readings</span><span>Latest</span></div></section><section className="panel system-panel"><div className="panel-heading"><div><div className="panel-kicker">SYSTEM HEALTH</div><h2>Simulation services</h2></div><span className="healthy-label"><i /> Operational</span></div><div className="service-row"><div className="service-icon"><Database size={16} /></div><div><strong>API & database</strong><span>FastAPI · SQLite</span></div><span className="service-state">Online</span></div><div className="service-row"><div className="service-icon"><Radio size={16} /></div><div><strong>Virtual sensor engine</strong><span>{summary?.active_simulations ?? 0} active simulations</span></div><span className="service-state">Ready</span></div><div className="service-row"><div className="service-icon"><Sparkles size={16} /></div><div><strong>AI model</strong><span>Custom YOLO weights required</span></div><span className="service-state pending">Setup</span></div></section></div>
   </>
 }
 
-function SimulatorPage({ bins, onRefresh, config }: { bins: Bin[]; onRefresh: () => Promise<void>; config: AppConfig }) {
+function SimulatorPage({ bins, onRefresh, config, initialBinId }: { bins: Bin[]; onRefresh: () => Promise<void>; config: AppConfig; initialBinId: string | null }) {
   const [selectedId, setSelectedId] = useState('')
   const [draftLevel, setDraftLevel] = useState(0)
   const [readings, setReadings] = useState<Reading[]>([])
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const selected = bins.find(bin => bin.id === selectedId) || bins[0]
-  useEffect(() => { if (bins.length && !bins.some(bin => bin.id === selectedId)) setSelectedId(bins[0].id) }, [bins, selectedId])
+  useEffect(() => { if (initialBinId && bins.some(bin => bin.id === initialBinId)) setSelectedId(initialBinId); else if (bins.length && !bins.some(bin => bin.id === selectedId)) setSelectedId(bins[0].id) }, [bins, selectedId, initialBinId])
   useEffect(() => { if (selected) setDraftLevel(Math.round(selected.fill_percentage)) }, [selected?.id, selected?.fill_percentage])
   const loadReadings = useCallback(async () => { if (selected) { try { setReadings(await api.readings(selected.id, config.simulation.max_readings)) } catch { /* main connection state is handled by app */ } } }, [selected?.id, config.simulation.max_readings])
   useEffect(() => { loadReadings() }, [loadReadings])
@@ -250,6 +250,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [lastSync, setLastSync] = useState(new Date())
   const [backendError, setBackendError] = useState('')
+  const [simulatorBinId, setSimulatorBinId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -273,8 +274,8 @@ export default function App() {
 
   return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} /><div className="main-content">
     {backendError && <div className="error-box backend-error">{backendError}</div>}
-    {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} loading={loading} config={config} />}
-    {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} />}
+    {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} onNeedCollection={() => { setSimulatorBinId(bins.find(bin => bin.status === 'full')?.id ?? null); setPage('simulator') }} loading={loading} config={config} />}
+    {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} initialBinId={simulatorBinId} />}
     {page === 'bins' && <BinsPage bins={bins} onRefresh={refresh} />}
     {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
     {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} />}
