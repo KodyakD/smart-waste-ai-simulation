@@ -111,7 +111,7 @@ export default function ImmersiveBinScene({ bin }: Props) {
             <path d="M280 103 V126 M362 103 V126 M271 126 H371" stroke="#6ca58b" strokeWidth="5" strokeLinecap="round" opacity=".75" />
             <rect x="258" y="69" width="126" height="43" rx="8" fill="#17392f" stroke="#5fc99a" strokeWidth="1.5" />
             <rect x="266" y="76" width="110" height="29" rx="5" fill="#214d3e" />
-            <circle cx="290" cy="91" r="13" fill="#10271f" stroke="url(#sensor-metal-' + safeId + ')" strokeWidth="3" />
+            <circle cx="290" cy="91" r="13" fill="#10271f" stroke={'url(#sensor-metal-' + safeId + ')'} strokeWidth="3" />
             <circle cx="290" cy="91" r="8" fill="#091914" stroke="#7ce3b4" strokeOpacity=".7" />
             <circle cx="352" cy="91" r="13" fill="#10271f" stroke="#56bb8d" strokeWidth="3" />
             <circle cx="352" cy="91" r="8" fill="#091914" stroke="#7ce3b4" strokeOpacity=".7" />
