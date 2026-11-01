@@ -259,6 +259,7 @@ export default function App() {
   const [simulatorBinId, setSimulatorBinId] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    if (!config) return
     try {
       const [dashboardData, alertData, detectionData, aiData] = await Promise.all([
         api.dashboard(), api.alerts(), api.detections(), api.aiStatus(),
@@ -266,7 +267,7 @@ export default function App() {
       setSummary(dashboardData); setBins(dashboardData.bins); setAlerts(alertData); setDetections(detectionData); setAIStatus(aiData); setBackendOnline(true); setBackendError(''); setLastSync(new Date())
       if (dashboardData.bins.length) {
         const preferred = dashboardData.bins.find(bin => bin.is_running) || dashboardData.bins[0]
-        setReadings(await api.readings(preferred.id, config?.simulation.max_readings || 48))
+        setReadings(await api.readings(preferred.id, config.simulation.max_readings))
       } else {
         setReadings([])
       }
@@ -274,7 +275,7 @@ export default function App() {
       setBackendOnline(false)
       setBackendError(cause instanceof Error ? cause.message : 'Backend request failed')
     } finally { setLoading(false) }
-  }, [config?.simulation.max_readings])
+  }, [config])
 
   useEffect(() => { if (!config) return; void refresh(); const timer = window.setInterval(() => void refresh(), config.simulation.interval_seconds * 1000); return () => window.clearInterval(timer) }, [refresh, config])
 
