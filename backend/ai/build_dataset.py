@@ -16,6 +16,8 @@ import hashlib
 import json
 import shutil
 import sys
+import time
+import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -96,20 +98,32 @@ def _mendeley_files(dataset_id: str, version: int, folder_id: str) -> list[dict]
         start += 1000
 
 
-def _download(url: str, dest: Path) -> None:
+def _download(url: str, dest: Path, attempts: int = 4) -> None:
     if dest.exists() and dest.stat().st_size > 0:
         return
     dest.parent.mkdir(parents=True, exist_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "smart-waste-build/1.0"})
-    with urllib.request.urlopen(request, timeout=120) as response, dest.open("wb") as out:
-        shutil.copyfileobj(response, out)
+    partial = dest.with_name(dest.name + ".part")
+    for attempt in range(1, attempts + 1):
+        try:
+            request = urllib.request.Request(url, headers={"User-Agent": "smart-waste-build/1.0"})
+            with urllib.request.urlopen(request, timeout=120) as response, partial.open("wb") as out:
+                shutil.copyfileobj(response, out)
+            partial.replace(dest)
+            return
+        except (urllib.error.URLError, OSError) as exc:
+            if attempt == attempts:
+                print(f"  failed after {attempts} attempts: {dest.name}: {exc}")
+                return
+            time.sleep(2 * attempt)
 
 
-def fetch_source(source: dict) -> None:
+def fetch_source(source: dict, workers: int = 16) -> None:
     mendeley = source.get("mendeley")
     if not mendeley:
         raise SystemExit(f"{source['id']}: no automated downloader, see datasets.md")
     root = RAW_DIR / source["id"]
+    for stale in root.rglob("*.part"):
+        stale.unlink()
     jobs: list[tuple[str, Path]] = []
     for key, folder_id in mendeley["folders"].items():
         split, kind = key.split("_", 1)
@@ -118,7 +132,7 @@ def fetch_source(source: dict) -> None:
             url = item["content_details"]["download_url"]
             jobs.append((url, root / split / kind / item["filename"]))
     print(f"{source['id']}: {len(jobs)} files")
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         for index, _ in enumerate(pool.map(lambda job: _download(*job), jobs), 1):
             if index % 250 == 0:
                 print(f"  {index}/{len(jobs)}")
@@ -225,6 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--prepare", action="store_true", help="remap, dedupe and split")
     parser.add_argument("--check", action="store_true", help="validate the output")
     parser.add_argument("--all", action="store_true", help="fetch, prepare and check")
+    parser.add_argument("--workers", type=int, default=16, help="parallel downloads")
     args = parser.parse_args(argv)
     if not (args.fetch or args.prepare or args.check or args.all):
         parser.print_help()
@@ -233,7 +248,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.fetch or args.all:
         for source in CONFIG["sources"]:
             if source["id"] in fetchable_sources():
-                fetch_source(source)
+                fetch_source(source, args.workers)
     if args.prepare or args.all:
         print(json.dumps(prepare(), indent=2))
     if args.check or args.all:

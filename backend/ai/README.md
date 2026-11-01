@@ -2,6 +2,10 @@
 
 This folder contains the custom YOLO training scaffold. It does **not** include images or trained weights.
 
+Sources, licenses and the class mapping live in [`datasets.md`](datasets.md) and
+[`sources.json`](sources.json). Build the dataset with
+`python build_dataset.py --all` (fetch, prepare, check).
+
 ## Dataset layout
 
 ```text
