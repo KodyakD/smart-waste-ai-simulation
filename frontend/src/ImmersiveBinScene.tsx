@@ -208,11 +208,6 @@ export default function ImmersiveBinScene({ bin, config }: Props) {
             <span className="scene-signal-value">{((2 * distance) / config.simulation.speed_of_sound_cm_per_us).toFixed(0)} <small>µs</small></span>
           </div>
 
-          <div className="scene-status-card">
-            <div className="scene-status-lights"><i className="light-green" /><i className="light-blue" /><i className={tone === 'critical' ? 'light-red' : 'light-amber'} /></div>
-            <div><strong>Virtual ESP32</strong><span>Wi-Fi link · HTTP telemetry</span></div>
-            <span className="scene-controller-state"><i /> ONLINE</span>
-          </div>
         </aside>
       </div>
 

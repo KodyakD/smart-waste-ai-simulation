@@ -40,6 +40,13 @@ class BinUpdateRequest(BaseModel):
             raise ValueError("Value cannot be blank")
         return cleaned
 
+    @field_validator("capacity_cm")
+    @classmethod
+    def reject_null_capacity(cls, value: float | None) -> float:
+        if value is None:
+            raise ValueError("Capacity cannot be null")
+        return value
+
 
 class SimulationActionResponse(BaseModel):
     message: str

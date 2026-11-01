@@ -267,6 +267,8 @@ export default function App() {
       if (dashboardData.bins.length) {
         const preferred = dashboardData.bins.find(bin => bin.is_running) || dashboardData.bins[0]
         setReadings(await api.readings(preferred.id, config?.simulation.max_readings || 48))
+      } else {
+        setReadings([])
       }
     } catch (cause) {
       setBackendOnline(false)

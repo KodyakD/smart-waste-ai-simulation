@@ -51,6 +51,12 @@ SETTINGS = RuntimeSettings(
     app_environment=os.getenv("APP_ENVIRONMENT", "Local instance"),
 )
 
+if SETTINGS.simulation_interval_seconds < 1:
+    raise ValueError("SIMULATION_INTERVAL_SECONDS must be at least one")
+if SETTINGS.sensor_full_distance_cm >= 20:
+    raise ValueError("SENSOR_FULL_DISTANCE_CM must be below the minimum bin capacity of 20 cm")
+if not 0 < SETTINGS.ai_confidence_threshold <= 1:
+    raise ValueError("AI_CONFIDENCE_THRESHOLD must be between zero and one")
 if not 0 < SETTINGS.fill_almost_full_threshold < SETTINGS.fill_full_threshold <= 100:
     raise ValueError("Fill thresholds must satisfy 0 < almost_full < full <= 100")
 
