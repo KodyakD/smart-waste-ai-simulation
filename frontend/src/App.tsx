@@ -4,7 +4,7 @@ import {
   Activity, AlertOctagon, AlertTriangle, ArrowUpRight, Bell, Camera, Check, ChevronDown,
   CircleHelp, Cpu, Database, FileImage, Gauge, LayoutDashboard, Leaf, Menu, MoreHorizontal,
   Pause, Play, Radio, RefreshCw, ScanSearch, Settings2, ShieldAlert, SlidersHorizontal,
-  Sparkles, Trash2, Upload, Wifi, X, Zap,
+  Sparkles, Trash2, Upload, X,
 } from 'lucide-react'
 import { api } from './api'
 import { useConfig } from './ConfigContext'

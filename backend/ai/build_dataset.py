@@ -205,8 +205,8 @@ def check() -> dict:
     target = target_classes()
     report: dict = {"classes": target, "splits": {}, "errors": []}
     for split in SPLITS:
-        images = {p.stem for p in (OUT_DIR / "images" / split).glob("*")}
-        labels = {p.stem for p in (OUT_DIR / "labels" / split).glob("*.txt")}
+        images = {p.stem for p in (OUT_DIR / "images" / split).glob("*") if not p.name.startswith(".")}
+        labels = {p.stem for p in (OUT_DIR / "labels" / split).glob("*.txt") if not p.name.startswith(".")}
         histogram = {name: 0 for name in target}
         boxes = 0
         for stem in images:
