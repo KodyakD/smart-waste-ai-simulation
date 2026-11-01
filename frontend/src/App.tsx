@@ -7,8 +7,9 @@ import {
   Sparkles, Trash2, Upload, Wifi, X, Zap,
 } from 'lucide-react'
 import { api } from './api'
+import { useConfig } from './ConfigContext'
 import ImmersiveBinScene from './ImmersiveBinScene'
-import type { AIStatus, Alert as AlertItem, Bin, DashboardSummary, Detection, Reading } from './types'
+import type { AIStatus, Alert as AlertItem, AppConfig, Bin, DashboardSummary, Detection, Reading } from './types'
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, group: 'WORKSPACE' },
@@ -67,13 +68,9 @@ function StatCard({ label, value, suffix, note, icon: Icon, tone = 'green', tren
   return <div className="stat-card"><div className="stat-top"><span>{label}</span><span className={`stat-icon ${tone}`}><Icon size={18} /></span></div><div className="stat-value">{value}<small>{suffix}</small></div><div className="stat-foot"><span className="stat-note">{note}</span>{trend && <span className="trend-chip"><ArrowUpRight size={13} />{trend}</span>}</div></div>
 }
 
-function FillBar({ value }: { value: number }) {
-  const tone = value >= 90 ? 'red' : value >= 70 ? 'amber' : 'green'
+function FillBar({ value, thresholds }: { value: number; thresholds: AppConfig['thresholds'] }) {
+  const tone = value >= thresholds.full ? 'red' : value >= thresholds.almost_full ? 'amber' : 'green'
   return <div className="fill-track"><div className={`fill-value ${tone}`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>
-}
-
-function SensorBoard() {
-  return <div className="board-visual"><div className="board-header"><Cpu size={16} /><span>ESP32 · VIRTUAL CONTROLLER</span><span className="board-live"><i /> LIVE</span></div><div className="board-body"><div className="board-chip"><span>ESP</span><strong>32</strong><small>WROOM</small></div><div className="board-pins left-pins"><i /><i /><i /><i /><i /></div><div className="board-pins right-pins"><i /><i /><i /><i /><i /></div><div className="board-leds"><span /><span /><span /></div></div><div className="board-footer"><span><Wifi size={13} /> Wi-Fi module</span><span><Zap size={13} /> 3.3V logic (visual)</span></div></div>
 }
 
 function SensorReadout({ bin }: { bin: Bin }) {
