@@ -106,6 +106,20 @@ def init_db() -> None:
                        VALUES (?, ?, ?, ?, ?)""",
                     (bin_id, fill, distance, status, now),
                 )
+
+        # Reconcile persisted status and distance after env-backed calibration changes.
+        for row in db.execute(
+            "SELECT id, capacity_cm, fill_percentage FROM bins"
+        ).fetchall():
+            fill = float(row["fill_percentage"])
+            db.execute(
+                "UPDATE bins SET distance_cm = ?, status = ? WHERE id = ?",
+                (
+                    distance_for_fill(fill, float(row["capacity_cm"])),
+                    status_for_fill(fill),
+                    row["id"],
+                ),
+            )
         db.commit()
 
 

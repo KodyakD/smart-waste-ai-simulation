@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image, UnidentifiedImageError
 
-from .config import AI_CLASSES, AI_SUPPORTED_CLASSES, AI_UNSUPPORTED_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
+from .config import AI_CLASSES, AI_CLASS_ALIASES, AI_SUPPORTED_CLASSES, AI_UNSUPPORTED_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
 from . import database
 from .schemas import BinCreateRequest, BinUpdateRequest, FillLevelRequest
 from .services.ai_service import AIService, serialize_bbox
@@ -261,6 +261,9 @@ async def detect_waste(file: UploadFile = File(...)) -> dict[str, Any]:
 
     saved = []
     for prediction in predictions:
+        prediction["class_name"] = AI_CLASS_ALIASES.get(
+            prediction["class_name"], prediction["class_name"]
+        )
         if prediction["class_name"] in AI_UNSUPPORTED_CLASSES:
             prediction["risk_level"] = "needs_review"
         saved.append(database.create_detection(
