@@ -32,6 +32,7 @@ def init_db() -> None:
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
                 location TEXT NOT NULL,
+                capacity_cm REAL NOT NULL DEFAULT 100,
                 fill_percentage REAL NOT NULL DEFAULT 0,
                 distance_cm REAL NOT NULL DEFAULT 100,
                 status TEXT NOT NULL DEFAULT 'normal',
@@ -72,6 +73,10 @@ def init_db() -> None:
             """
         )
 
+        columns = {row["name"] for row in db.execute("PRAGMA table_info(bins)").fetchall()}
+        if "capacity_cm" not in columns:
+            db.execute("ALTER TABLE bins ADD COLUMN capacity_cm REAL NOT NULL DEFAULT 100")
+
         existing = db.execute("SELECT COUNT(*) AS count FROM bins").fetchone()["count"]
         if existing == 0:
             initial_bins = [
@@ -81,13 +86,14 @@ def init_db() -> None:
             ]
             now = utc_now()
             for bin_id, name, location, fill in initial_bins:
-                distance = round(100 - (fill / 100 * 90), 1)
+                capacity_cm = 100.0
+                distance = distance_for_fill(fill, capacity_cm)
                 status = status_for_fill(fill)
                 db.execute(
                     """INSERT INTO bins
-                       (id, name, location, fill_percentage, distance_cm, status, is_running, last_updated)
-                       VALUES (?, ?, ?, ?, ?, ?, 0, ?)""",
-                    (bin_id, name, location, fill, distance, status, now),
+                       (id, name, location, capacity_cm, fill_percentage, distance_cm, status, is_running, last_updated)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)""",
+                    (bin_id, name, location, capacity_cm, fill, distance, status, now),
                 )
                 db.execute(
                     """INSERT INTO sensor_readings
@@ -96,6 +102,11 @@ def init_db() -> None:
                     (bin_id, fill, distance, status, now),
                 )
         db.commit()
+
+
+def distance_for_fill(fill: float, capacity_cm: float) -> float:
+    distance = capacity_cm - (fill / 100.0) * (capacity_cm - SETTINGS.sensor_full_distance_cm)
+    return round(distance, 1)
 
 
 def status_for_fill(fill: float) -> str:
@@ -136,16 +147,16 @@ def set_bin_running(bin_id: str, running: bool) -> dict[str, Any] | None:
 
 def record_reading(bin_id: str, fill: float) -> dict[str, Any] | None:
     fill = max(0.0, min(100.0, float(fill)))
-    distance = round(100.0 - (fill / 100.0 * 90.0), 1)
     status = status_for_fill(fill)
     now = utc_now()
     with connect() as db:
         current = db.execute(
-            "SELECT fill_percentage, name FROM bins WHERE id = ?", (bin_id,)
+            "SELECT fill_percentage, name, capacity_cm FROM bins WHERE id = ?", (bin_id,)
         ).fetchone()
         if current is None:
             return None
         previous_fill = float(current["fill_percentage"])
+        distance = distance_for_fill(fill, float(current["capacity_cm"]))
         db.execute(
             """UPDATE bins SET fill_percentage = ?, distance_cm = ?, status = ?, last_updated = ?
                WHERE id = ?""",
@@ -275,3 +286,61 @@ def dashboard_summary() -> dict[str, Any]:
         "total_detections": detections,
         "total_readings": readings,
     }
+
+
+def create_bin(bin_id: str, name: str, location: str, capacity_cm: float, fill: float = 0) -> dict[str, Any]:
+    now = utc_now()
+    status = status_for_fill(fill)
+    distance = distance_for_fill(fill, capacity_cm)
+    with connect() as db:
+        db.execute(
+            """INSERT INTO bins
+               (id, name, location, capacity_cm, fill_percentage, distance_cm, status, is_running, last_updated)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)""",
+            (bin_id, name, location, capacity_cm, fill, distance, status, now),
+        )
+        db.execute(
+            """INSERT INTO sensor_readings
+               (bin_id, fill_percentage, distance_cm, status, created_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (bin_id, fill, distance, status, now),
+        )
+        db.commit()
+    item = get_bin(bin_id)
+    if item is None:
+        raise RuntimeError("Created bin could not be read back")
+    return item
+
+
+def update_bin(bin_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
+    allowed = {"name", "location", "capacity_cm"}
+    values = {key: value for key, value in updates.items() if key in allowed}
+    if not values:
+        return get_bin(bin_id)
+    values["last_updated"] = utc_now()
+    with connect() as db:
+        row = db.execute(
+            "SELECT fill_percentage, capacity_cm FROM bins WHERE id = ?", (bin_id,)
+        ).fetchone()
+        if row is None:
+            return None
+        capacity = float(values.get("capacity_cm", row["capacity_cm"]))
+        values["distance_cm"] = distance_for_fill(float(row["fill_percentage"]), capacity)
+        assignments = ", ".join(f"{column} = ?" for column in values)
+        db.execute(
+            f"UPDATE bins SET {assignments} WHERE id = ?",
+            (*values.values(), bin_id),
+        )
+        db.commit()
+    return get_bin(bin_id)
+
+
+def delete_bin(bin_id: str) -> bool:
+    with connect() as db:
+        existing = db.execute("SELECT id FROM bins WHERE id = ?", (bin_id,)).fetchone()
+        if existing is None:
+            return False
+        db.execute("UPDATE bins SET is_running = 0 WHERE id = ?", (bin_id,))
+        db.execute("DELETE FROM bins WHERE id = ?", (bin_id,))
+        db.commit()
+    return True

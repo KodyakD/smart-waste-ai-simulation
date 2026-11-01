@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -13,7 +14,7 @@ from PIL import Image, UnidentifiedImageError
 
 from .config import AI_CLASSES, BASE_DIR, SETTINGS  # loads backend/.env before other modules read settings
 from . import database
-from .schemas import FillLevelRequest
+from .schemas import BinCreateRequest, BinUpdateRequest, FillLevelRequest
 from .services.ai_service import AIService, serialize_bbox
 from .services.simulator import SimulationRunner
 
@@ -102,6 +103,37 @@ def dashboard() -> dict[str, Any]:
 @app.get("/api/v1/bins")
 def bins() -> list[dict[str, Any]]:
     return database.list_bins()
+
+
+@app.post("/api/v1/bins", status_code=201)
+def create_bin(payload: BinCreateRequest) -> dict[str, Any]:
+    try:
+        return database.create_bin(
+            bin_id=payload.id,
+            name=payload.name,
+            location=payload.location,
+            capacity_cm=payload.capacity_cm,
+            fill=payload.fill_percentage,
+        )
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=409, detail="A bin with this id already exists")
+
+
+@app.patch("/api/v1/bins/{bin_id}")
+def update_bin(bin_id: str, payload: BinUpdateRequest) -> dict[str, Any]:
+    updates = payload.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=422, detail="Provide at least one field to update")
+    updated = database.update_bin(bin_id, updates)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Virtual bin not found")
+    return updated
+
+
+@app.delete("/api/v1/bins/{bin_id}", status_code=204)
+def delete_bin(bin_id: str) -> None:
+    if not database.delete_bin(bin_id):
+        raise HTTPException(status_code=404, detail="Virtual bin not found")
 
 
 @app.get("/api/v1/bins/{bin_id}/readings")
