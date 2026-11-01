@@ -51,6 +51,32 @@ Rules:
 - A skill is process, not permission: it never overrides section 1 (no
   hardcoded values) or the anti-slop checklist.
 
+### Dataset and model skills (`backend/ai/`)
+
+The generic skills above stop at the ML boundary. For anything under
+`backend/ai/`, load the official Ultralytics skills instead — they are the
+stack this repo actually uses.
+
+| Task | Skill | URL |
+|---|---|---|
+| Any YOLO work — routing, CLI, config | yolo | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo/SKILL.md |
+| Building, converting, splitting datasets; `data.yaml`; label formats; validate-before-train | yolo-datasets | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-datasets/SKILL.md |
+| Training, fine-tuning, validating, reading `runs/`, troubleshooting | yolo-training | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-training/SKILL.md |
+| Improving a trained model, hyperparameter search | yolo-tuning | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-tuning/SKILL.md |
+| Choosing a model family or size | yolo-models | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-models/SKILL.md |
+| Prediction and tracking | yolo-inference | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-inference/SKILL.md |
+| ONNX / TFLite / other export | yolo-export | https://raw.githubusercontent.com/ultralytics/skills/main/skills/yolo-export/SKILL.md |
+| Dataset curation: dedupe, leakage, class imbalance, dataset card | dataset-curator | https://raw.githubusercontent.com/xcrrr/claude-skills/main/skills/ai-ml/dataset-curator/SKILL.md |
+
+Sources: https://github.com/ultralytics/skills (AGPL-3.0 — link only, never
+copy into this repo) and https://github.com/xcrrr/claude-skills (MIT, low-star
+community repo — read it as a checklist, not as authority).
+
+`dataset-curator` is the only skill that talks about the failure this repo
+already hit: a validation split that duplicates training images. Its advice
+does not override `backend/ai/datasets.md`, which records the licenses and the
+actual counts.
+
 ## Handoff prompt
 
 Paste this with the repo when handing the work to another model:
