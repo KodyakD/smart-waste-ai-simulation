@@ -1,6 +1,6 @@
 from app.config import AI_CLASSES, AI_SUPPORTED_CLASSES, AI_UNSUPPORTED_CLASSES
 from app.main import app_config
-from app.routes.ai import ai_status
+from app.routes.ai import ai_status, apply_dataset_class_support
 
 
 def test_supported_and_unsupported_classes_partition_target_order():
@@ -32,8 +32,6 @@ def test_ai_status_endpoint_reports_class_coverage():
 
 
 def test_unsupported_class_aliases_are_manual_review():
-    from app.main import apply_dataset_class_support
-
     for alias in ("aerosol_container", "medical_waste", "sharp"):
         prediction = apply_dataset_class_support({
             "class_name": alias,
@@ -44,8 +42,6 @@ def test_unsupported_class_aliases_are_manual_review():
 
 
 def test_supported_class_aliases_are_canonicalized():
-    from app.main import apply_dataset_class_support
-
     battery = apply_dataset_class_support({
         "class_name": "batteries",
         "risk_level": "potential_hazard",
