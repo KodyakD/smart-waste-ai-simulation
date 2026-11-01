@@ -1,0 +1,264 @@
+# Build rules — EcoMind Smart Waste
+
+These rules override any other instruction. They exist because generated code
+drifted into hardcoded values, decorative fake data and dead controls.
+
+Read this file before touching the repository. Every rule below has an
+acceptance check; a change is not done until the check passes.
+
+## Skills to load (mandatory)
+
+Do not improvise a methodology. Before each phase, open the `SKILL.md` at the
+URL below and follow it. If a skill conflicts with a rule in this file, this
+file wins. If you cannot fetch a skill, stop and say so instead of guessing.
+
+| Phase | Skill | URL |
+|---|---|---|
+| Any non-trivial feature | brainstorming | https://raw.githubusercontent.com/obra/superpowers/main/skills/brainstorming/SKILL.md |
+| Turning it into steps | writing-plans | https://raw.githubusercontent.com/obra/superpowers/main/skills/writing-plans/SKILL.md |
+| Spec before code | spec-driven-development | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/spec-driven-development/SKILL.md |
+| Small safe steps | incremental-implementation | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/incremental-implementation/SKILL.md |
+| API + schema design | api-and-interface-design | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/api-and-interface-design/SKILL.md |
+| UI / layout / visualisation | frontend-design | https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md |
+| Component structure | frontend-ui-engineering | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/frontend-ui-engineering/SKILL.md |
+| Any bug | systematic-debugging | https://raw.githubusercontent.com/obra/superpowers/main/skills/systematic-debugging/SKILL.md |
+| Fixing a failure | debugging-and-error-recovery | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/debugging-and-error-recovery/SKILL.md |
+| New logic | test-driven-development | https://raw.githubusercontent.com/obra/superpowers/main/skills/test-driven-development/SKILL.md |
+| Clicking through the UI | webapp-testing | https://raw.githubusercontent.com/anthropics/skills/main/skills/webapp-testing/SKILL.md |
+| Browser/devtools checks | browser-testing-with-devtools | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/browser-testing-with-devtools/SKILL.md |
+| Before saying "done" | verification-before-completion | https://raw.githubusercontent.com/obra/superpowers/main/skills/verification-before-completion/SKILL.md |
+| Self review | code-review-and-quality | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/code-review-and-quality/SKILL.md |
+| Removing bloat | code-simplification | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/code-simplification/SKILL.md |
+| Auth / uploads / input | security-and-hardening | https://raw.githubusercontent.com/addyosmani/agent-skills/main/skills/security-and-hardening/SKILL.md |
+
+Source repositories (star counts and layout change; the URLs above are what
+matter):
+
+- https://github.com/obra/superpowers — process skills: brainstorm, plan,
+  debug, TDD, verify.
+- https://github.com/anthropics/skills — Anthropic's public Agent Skills,
+  including `frontend-design` and `webapp-testing`.
+- https://github.com/addyosmani/agent-skills — production engineering skills:
+  spec, API design, code review, security.
+- https://github.com/mattpocock/skills — optional; `engineering/tdd`,
+  `engineering/diagnosing-bugs`, `engineering/code-review` if the above are
+  unavailable.
+
+Rules:
+
+- Load the skill **before** starting the phase, not after it goes wrong.
+- Name the skills you used in the commit message or PR body.
+- A skill is process, not permission: it never overrides section 1 (no
+  hardcoded values) or the anti-slop checklist.
+
+## Handoff prompt
+
+Paste this with the repo when handing the work to another model:
+
+> You are working on the EcoMind smart waste simulation: FastAPI + SQLite
+> backend, React + TypeScript frontend. Follow `AGENTS.md` exactly. Load the
+> skills listed in it before each phase — start with `brainstorming`, then
+> `writing-plans`, and finish with `verification-before-completion`; do not
+> substitute your own process for theirs. No hardcoded domain values in the
+> frontend — everything comes from `GET /api/v1/config` or the bin record. No
+> fake data, no decorative metrics, no dead buttons. Run `npm run build` and
+> the backend tests before claiming anything is done. Implement the work order
+> in section 8, in order. Ask before adding a dependency. Ask the human for
+> the dataset links before touching the AI model — never invent a dataset or
+> sample images.
+
+## 0. Definition of done
+
+- `cd frontend && npm run build` passes (`tsc -b` is part of it — no unused
+  symbols, no `any`, no `@ts-ignore`).
+- The backend starts and every endpoint you touched was called once with real
+  data (`curl` / `Invoke-WebRequest`), not just "it compiles".
+- No new dependency without asking first.
+- No placeholder data, no invented predictions, no decorative metrics. If a
+  value is unknown, render `—` and say why.
+
+## 1. Zero hardcoded domain values in the frontend
+
+The backend is the single source of truth. The frontend may only hardcode
+layout: CSS units, SVG viewBox geometry, icon sizes.
+
+Required contract — `GET /api/v1/config`:
+
+```json
+{
+  "simulation": {
+    "interval_seconds": 3,
+    "full_distance_cm": 10,
+    "speed_of_sound_cm_per_us": 0.01715,
+    "max_readings": 48
+  },
+  "thresholds": { "almost_full": 70, "full": 90 },
+  "ai": {
+    "configured": false,
+    "model_path": "backend/ai/weights/best.pt",
+    "architecture": "YOLO object detection",
+    "device": "cpu",
+    "confidence_threshold": 0.35,
+    "classes": ["ordinary_waste", "battery", "electronic_waste", "aerosol", "medical_sharp"]
+  },
+  "app": { "name": "EcoMind", "environment": "Local instance" }
+}
+```
+
+Values live in `backend/app/config.py` (env-overridable), are exposed by that
+endpoint, and are mirrored in `frontend/src/types.ts` as `AppConfig`.
+
+Per-bin physical capacity is **not** in the config endpoint — it is a column on
+each bin (`bins.capacity_cm`, default `100`). Distance is derived from it:
+
+```text
+distance_cm = capacity_cm - (fill / 100) * (capacity_cm - config.simulation.full_distance_cm)
+```
+
+`capacity_cm` is the empty distance measured by the sensor, so a taller bin
+reads a larger empty distance. Never hardcode `100` or `90` as a span in
+either layer.
+
+Known violations to remove — every one of these must disappear:
+
+| File | Line | Hardcoded |
+|---|---|---|
+| `frontend/src/App.tsx` | 71 | fill bar thresholds `90` / `70` |
+| `frontend/src/App.tsx` | 100 | `"Across 3 simulated zones"` |
+| `frontend/src/App.tsx` | 102 | `"At 90% capacity or above"` |
+| `frontend/src/App.tsx` | 139 | `"Update interval: 3 sec"` |
+| `frontend/src/App.tsx` | Settings page | `3 seconds`, `5 waste categories`, `backend/ai/weights/best.pt`, `Local laptop`, `YOLO object detection`, `CPU / automatic` |
+| `frontend/src/App.tsx` | 215 | class chips list typed in by hand instead of `config.ai.classes` |
+| `frontend/src/ImmersiveBinScene.tsx` | 15, 20–21, 177, 207 | thresholds `70`/`90`, `100 cm` scale, `58.3` µs/cm, surface maths `365 - fill * 1.92` |
+
+Acceptance: set `SIMULATION_INTERVAL_SECONDS=7` and
+`FILL_FULL_THRESHOLD=85` in `backend/.env`, restart only the backend, reload
+the UI — every label, bar colour, scene status and chart follows, with zero
+frontend edits.
+
+## 2. Datasets (blocked: waiting on links)
+
+Do not invent, generate or substitute a dataset. Record each one in
+`backend/ai/datasets.md`:
+
+| Dataset | URL | License | Classes used | Images | Split |
+|---|---|---|---|---|---|
+| _(pending)_ | | | | | |
+
+Rules: images are never committed; a downloader script may fetch them; the
+class order in `backend/ai/dataset.yaml` must match `config.ai.classes`
+exactly; if the dataset has extra classes, map them explicitly and record the
+mapping.
+
+## 3. Alerting must actually work
+
+Verify each item against a running backend, then keep a test for it:
+
+1. An alert fires **only** when a bin crosses a threshold upward, never once
+   per reading tick.
+2. Emptying and refilling a bin produces exactly one new alert per crossing.
+3. `unread_alerts` in `/dashboard` equals `alerts` rows with `is_read = 0`.
+4. `POST /alerts/{id}/read` flips one row, is idempotent, and the badge and
+   count update without a page reload.
+5. Severity mapping is defined in one place and matches the threshold that
+   triggered it.
+6. Deleting a bin keeps its alert history with `bin_id = NULL`.
+7. The UI shows an empty state, not a fake "all good" claim, when the alert
+   list is empty and when the backend is offline.
+
+One pytest file (`backend/tests/test_alerts.py`) covers 1, 2, 3 and 6.
+`pytest` goes in a new `requirements-dev.txt`, not in production requirements.
+
+## 4. Every control on the Overview page works
+
+Dead controls found: topbar notifications bell, top avatar, workspace
+switcher, the four stat cards, recent-alert rows. Working: "Open simulator",
+"View simulator", nav links.
+
+Rule: no control ships dead. Either wire it to a real destination/action or
+delete it. A button that does nothing is a bug, not a placeholder.
+
+## 5. Bin management (create / edit / delete)
+
+Backend:
+
+- `POST /api/v1/bins` — body `{ id, name, location, capacity_cm, fill_percentage? }`
+- `PATCH /api/v1/bins/{bin_id}` — partial update of `name`, `location`, `capacity_cm`
+- `DELETE /api/v1/bins/{bin_id}` — stops its simulation, deletes readings, keeps alerts with `bin_id = NULL`
+
+Validation at the trust boundary: id matches `^[A-Z0-9-]{3,16}$` and is
+unique, `name`/`location` non-empty, `capacity_cm > 0`, `0 <= fill <= 100`.
+Return 409 on duplicate id, 404 on unknown id, 422 on invalid body.
+
+Storage: add a `capacity_cm` column with an idempotent migration
+(`PRAGMA table_info` + `ALTER TABLE`), never drop or recreate existing data.
+
+Frontend: a "Bins" page with a table (id, name, location, capacity, fill,
+status, actions), an add form, inline edit, and delete behind a confirm.
+After any mutation, refresh from the API — do not mutate local state as truth.
+
+## 6. Simulator layout
+
+The visualisation owns the full content width. Controls sit **below** it in a
+responsive row, telemetry below that. No narrow side column squeezing the
+scene. Single column below 900px.
+
+## 7. ESP32 panel
+
+Delete the decorative `SensorBoard` (fake "ESP 32 WROOM", fake pins, fake
+LEDs). Replace it with real telemetry: device state (running/paused), update
+interval, last reading timestamp, current payload, echo time computed from
+`config.simulation.speed_of_sound_cm_per_us`, and the HTTP endpoint it would
+use. Anything the backend does not report is rendered `—`, never invented.
+
+## 8. Work order
+
+Do these in order; each step must leave the app running.
+
+1. `GET /api/v1/config` + `frontend/src/types.ts` types + a `useConfig` hook.
+   Replace every violation in section 1. Verify by changing `.env` only.
+2. Bin schema migration (`capacity_cm`), per-bin distance formula, then
+   `POST` / `PATCH` / `DELETE /api/v1/bins` with validation and tests.
+3. Bins management page (table + add + edit + delete with confirm).
+4. Alerting audit: fix what the checklist in section 3 exposes, add
+   `backend/tests/test_alerts.py`.
+5. Simulator layout: full-width scene, controls below, telemetry below.
+6. Replace `SensorBoard` with real ESP32 telemetry (section 7).
+7. Overview: wire or delete every dead control (section 4).
+
+Do not start step 2 before step 1 lands, or the new UI inherits the same
+hardcoded values.
+
+## 9. Known traps
+
+- `tsc -b` fails the build on unused imports (`TS6133`) and missing imports
+  (`TS2552`) that Vite dev mode silently tolerates. Run the build, not just
+  the dev server.
+- SVG `<defs>` ids are global to the document. If two scenes render at once,
+  suffix every gradient/clip/filter id with the bin id.
+- SQLite needs `PRAGMA foreign_keys = ON` per connection (already in
+  `connect()`); deleting a bin without it leaves orphan readings.
+- `is_running` lives in the DB, not in memory. Stop the runner before
+  deleting a bin, or the next tick writes to a dead row.
+- The frontend polls every 3 s (`App.tsx` refresh timer). After a mutation,
+  await the refresh; do not trust optimistic local state.
+- Windows: git warns about LF→CRLF on commit. Ignore it, do not add
+  `.gitattributes` unless asked.
+
+## Anti-slop checklist
+
+- No duplicated thresholds: one config source, imported everywhere.
+- No `console.log`, no commented-out code, no unused exports or imports.
+- Errors surface in the UI; never swallow a failure into a silent catch.
+- Every fetch has loading and error states.
+- Files stay under ~250 lines; split pages into `frontend/src/pages/`.
+- No emoji, no invented marketing copy, no fake user names or avatars.
+
+## Verify before you say "done"
+
+```powershell
+cd backend; .\.venv\Scripts\python.exe -m pytest tests -q
+cd frontend; npm run build
+```
+
+Then open the UI and click every control on the page you changed.
