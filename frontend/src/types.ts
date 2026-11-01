@@ -15,6 +15,8 @@ export interface AppConfig {
     device: string
     confidence_threshold: number
     classes: string[]
+    supported_classes: string[]
+    unsupported_classes: string[]
   }
   app: { name: string; environment: string }
 }
@@ -94,4 +96,6 @@ export interface AIStatus {
   model_path: string
   message: string
   classes: string[]
+  supported_classes: string[]
+  unsupported_classes: string[]
 }

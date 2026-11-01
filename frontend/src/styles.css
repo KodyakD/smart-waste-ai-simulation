@@ -51,3 +51,6 @@
 .healthy-label.offline i{background:#b46b5d}
 .sensor-indicator.is-paused{color:#8c9990}
 .sensor-indicator.is-paused i{background:#aab5ae}
+
+.class-chips span.class-supported,.class-grid span.class-supported{border-color:#d9ebdf;background:#eff8f1;color:#367d56}
+.class-chips span.class-unsupported,.class-grid span.class-unsupported{border-color:#eee1ce;background:#fff8ef;color:#a67b43}
