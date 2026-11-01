@@ -114,50 +114,62 @@ Copy `backend/.env.example` to `backend/.env` to configure the simulation. The l
 
 Use the **Bins** page to create, edit or delete virtual bins. Capacity changes recalculate the current distance, and deleting a bin removes its sensor readings while preserving its alert history.
 
-## AI model setup (optional next phase)
+## AI model setup
 
-The AI page and API are scaffolded, but inference is disabled until a custom model is available. The checked-in manifest and builder prepare a redistributable three-class training set. Read `backend/ai/datasets.md` and `backend/ai/sources.json` before downloading or training. Do not merge the non-redistributable or unresolved sources listed there.
+The repository includes a source manifest and a YOLO dataset builder. The
+redistributable CC BY 4.0 detection source currently covers three target
+classes: `ordinary_waste`, `battery` and `electronic_waste`. The classes
+`aerosol` and `medical_sharp` remain unsupported because there is no usable
+licensed annotated source for them. Read `backend/ai/datasets.md` and
+`backend/ai/sources.json` before building or training.
 
-1. From the repository root, verify the prepared dataset locally. The image folders are gitignored and are not stored in Git:
+1. Build the prepared dataset from the repository root (this downloads only
+   sources marked redistributable and writes image files into gitignored
+   folders):
 
    ```powershell
    cd backend\\ai
+   ..\\.venv\\Scripts\\python.exe build_dataset.py --all
+   ```
+
+2. Confirm the resulting split counts and class histogram match
+   `backend/ai/datasets.md`. You can re-run validation without downloading:
+
+   ```powershell
    ..\\.venv\\Scripts\\python.exe build_dataset.py --check
    ```
 
-2. The target class order in `backend/ai/dataset.yaml` remains five classes for API compatibility. Only `ordinary_waste`, `battery` and `electronic_waste` have licensed training boxes; `aerosol` and `medical_sharp` are reported as unsupported until valid annotated sources are added.
+   An empty `aerosol` or `medical_sharp` histogram is expected for the
+   current licensed sources. Do not claim those classes are trainable.
 
-3. Install optional dependencies:
-   - `ordinary_waste`
-   - `battery`
-   - `electronic_waste`
-   - `aerosol`
-   - `medical_sharp`
-2. Place images and YOLO-format label files in `backend/ai/datasets/waste/` using the `images/` and `labels/` train/val folders.
-3. Install optional dependencies:
+3. Install the optional YOLO dependency:
 
-   ```bash
+   ```powershell
+   cd ..\\..
    cd backend
    pip install -r requirements-ai.txt
+   cd ..
    ```
 
-4. From the project root, train the model:
+4. Train using the included helper from the repository root:
 
-   ```bash
-   yolo detect train model=yolo11n.pt data=backend/ai/dataset.yaml epochs=80 imgsz=640
-   ```
-
-   Or use the included helper:
-
-   ```bash
+   ```powershell
    python backend/ai/train.py
    ```
 
-5. Copy the trained `best.pt` to `backend/ai/weights/best.pt`.
-6. Restart FastAPI. The AI status endpoint should report that the model is ready.
+   The configured target order in `backend/ai/dataset.yaml` remains five
+   classes for API compatibility, but the current dataset only supplies
+   training boxes for the first three. The app reports that distinction and
+   sends any unsupported-class output to manual review.
 
-Only train on datasets whose licenses permit the intended use. Ensure training, validation and test sets are separated by source/location where possible to reduce data leakage. Do not claim model support for classes with no training examples. Measure precision, recall, mAP50, mAP50-95, and per-class performance. A broad `ordinary_waste` class may be difficult to learn; define its scope carefully.
+5. Copy the trained `best.pt` to `backend/ai/weights/best.pt`, then restart
+   FastAPI. `/api/v1/ai/status` will report whether real weights are loaded
+   and list supported and unsupported classes separately.
 
+Dataset images, raw archives and model weights are gitignored and must not be
+committed. Preserve the source attribution and license terms in
+`backend/ai/datasets.md` when redistributing a prepared dataset.
+ 
 ### AI safety and limitations
 
 - Object detection only identifies visible objects; it cannot test chemical composition, toxicity, contamination, or hidden contents.
