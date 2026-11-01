@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app import database
+from app.config import SETTINGS
 from app.main import app
 
 
@@ -9,16 +10,19 @@ from app.main import app
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(database, "DB_PATH", tmp_path / "alerts-test.db")
     database.init_db()
-    database.create_bin("BIN-ALERT", "Alert bin", "Zone A", 100, 65)
+    database.create_bin("BIN-ALERT", "Alert bin", "Zone A", 100, max(0, SETTINGS.fill_almost_full_threshold - 5))
     with TestClient(app) as test_client:
         yield test_client
 
 
 def test_alerts_fire_once_per_upward_threshold_crossing(client):
-    database.record_reading("BIN-ALERT", 70)
-    database.record_reading("BIN-ALERT", 73)
-    database.record_reading("BIN-ALERT", 90)
-    database.record_reading("BIN-ALERT", 94)
+    almost_full = SETTINGS.fill_almost_full_threshold
+    full = SETTINGS.fill_full_threshold
+    between = almost_full + (full - almost_full) / 2
+    database.record_reading("BIN-ALERT", almost_full)
+    database.record_reading("BIN-ALERT", between)
+    database.record_reading("BIN-ALERT", full)
+    database.record_reading("BIN-ALERT", full)
 
     alerts = client.get("/api/v1/alerts").json()
     assert len(alerts) == 2
@@ -28,11 +32,13 @@ def test_alerts_fire_once_per_upward_threshold_crossing(client):
 
 
 def test_emptying_and_refilling_generates_one_new_alert_per_crossing(client):
-    database.record_reading("BIN-ALERT", 70)
-    database.record_reading("BIN-ALERT", 72)
+    threshold = SETTINGS.fill_almost_full_threshold
+    between = threshold + (SETTINGS.fill_full_threshold - threshold) / 2
+    database.record_reading("BIN-ALERT", threshold)
+    database.record_reading("BIN-ALERT", between)
     database.record_reading("BIN-ALERT", 0)
-    database.record_reading("BIN-ALERT", 70)
-    database.record_reading("BIN-ALERT", 73)
+    database.record_reading("BIN-ALERT", threshold)
+    database.record_reading("BIN-ALERT", between)
 
     alerts = client.get("/api/v1/alerts").json()
     assert len(alerts) == 2
@@ -40,7 +46,7 @@ def test_emptying_and_refilling_generates_one_new_alert_per_crossing(client):
 
 
 def test_dashboard_unread_count_matches_alert_rows_and_read_is_idempotent(client):
-    database.record_reading("BIN-ALERT", 70)
+    database.record_reading("BIN-ALERT", SETTINGS.fill_almost_full_threshold)
     alert = client.get("/api/v1/alerts").json()[0]
 
     first = client.post(f"/api/v1/alerts/{alert['id']}/read")
