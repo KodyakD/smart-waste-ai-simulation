@@ -197,9 +197,13 @@ cd frontend; npm run build
 Then a manual pass: Overview → Bins → Simulator → Alerts → Settings, plus one
 AI page load. Commit per phase; name the skills used in each commit message.
 
-## Phase 9 — AI datasets (blocked)
+## Phase 9 — AI datasets (delivered, one gap)
 
-Do not start. Waiting on the human for dataset links. When they arrive, record
-them in `backend/ai/datasets.md` (URL, license, classes, image count, split),
-map classes to `config.ai.classes` order, and only then touch training. No
-dataset is ever committed to the repo.
+Dataset links arrived and the dataset is built: 5,993 images / 21,033 boxes in
+`backend/ai/datasets/waste`, sources and licenses recorded in
+`backend/ai/datasets.md`. Do not re-fetch or re-merge; run
+`python backend/ai/build_dataset.py --check` to verify.
+
+Remaining gap: `aerosol` and `medical_sharp` have **zero** annotated boxes. The
+model cannot detect them, and no report may imply it can. Closing this needs a
+labelled source for those two classes, not more code.

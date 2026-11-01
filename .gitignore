@@ -30,3 +30,5 @@ backend/ai/datasets/waste/labels/
 
 # Upstream has no license file, so these stay local only
 skills/anthropics__skills/
+runs/
+yolo*.pt

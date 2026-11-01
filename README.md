@@ -114,38 +114,41 @@ distance = 100 - (fill percentage / 100 * 90)
 
 The exact values are simulation parameters, not physical measurements.
 
-## AI model setup (optional next phase)
+## AI model setup
 
-The AI page and API are scaffolded, but inference is disabled until a custom model is available.
+The dataset is built from public sources (see `backend/ai/datasets.md` for
+licenses and limits). Training uses the same classes as `dataset.yaml`.
 
-1. Prepare a YOLO object-detection dataset with these exact class names/order:
-   - `ordinary_waste`
-   - `battery`
-   - `electronic_waste`
-   - `aerosol`
-   - `medical_sharp`
-2. Place images and YOLO-format label files in `backend/ai/datasets/waste/` using the `images/` and `labels/` train/val folders.
-3. Install optional dependencies:
+1. Install the optional dependencies:
 
    ```bash
    cd backend
    pip install -r requirements-ai.txt
    ```
 
-4. From the project root, train the model:
+2. Build the dataset (fetch, prepare, check):
 
    ```bash
-   yolo detect train model=yolo11n.pt data=backend/ai/dataset.yaml epochs=80 imgsz=640
+   cd backend
+   python ai/build_dataset.py --all
    ```
 
-   Or use the included helper:
+3. Validate and train:
 
    ```bash
-   python backend/ai/train.py
+   python ai/train.py check                 # per-class box counts, warns about empty classes
+   python ai/train.py train --epochs 80     # yolo11n on GPU 0, copies best.pt when done
+   python ai/train.py eval                  # test split -> backend/ai/report.md
    ```
 
-5. Copy the trained `best.pt` to `backend/ai/weights/best.pt`.
-6. Restart FastAPI. The AI status endpoint should report that the model is ready.
+4. Restart FastAPI. `/api/v1/ai/status` reports the model as ready once
+   `backend/ai/weights/best.pt` exists.
+
+**Current data limit:** only `ordinary_waste`, `battery` and `electronic_waste`
+have annotated boxes. `aerosol` and `medical_sharp` have none, so the model
+cannot detect them — `train.py check` says so and `report.md` reports them as
+missing data, not as model failure. Add labelled images for those classes
+before claiming five-class support.
 
 Use a legally usable, well-labeled dataset. Ensure the training, validation, and test sets are separated by source/location where possible to reduce data leakage. Measure precision, recall, mAP50, mAP50-95, and per-class performance. A broad `ordinary_waste` class may be difficult to learn; define its scope carefully.
 
