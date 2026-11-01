@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app import database
+from app.config import SETTINGS
 from app.main import app
 
 
@@ -88,11 +89,13 @@ def test_distance_uses_each_bins_capacity_and_updates_after_capacity_change(clie
         "capacity_cm": 200, "fill_percentage": 50,
     })
     assert created.status_code == 201
-    assert created.json()["distance_cm"] == 105
+    expected_distance = 200 - (200 - SETTINGS.sensor_full_distance_cm) * 0.5
+    assert created.json()["distance_cm"] == round(expected_distance, 1)
 
     updated = client.patch("/api/v1/bins/BIN-TALL", json={"capacity_cm": 300})
     assert updated.status_code == 200
-    assert updated.json()["distance_cm"] == 155
+    expected_after_resize = 300 - (300 - SETTINGS.sensor_full_distance_cm) * 0.5
+    assert updated.json()["distance_cm"] == round(expected_after_resize, 1)
 
 
 def test_capacity_migration_preserves_existing_bin_data(tmp_path, monkeypatch):
