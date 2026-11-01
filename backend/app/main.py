@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import database
-from .config import SETTINGS
+from .config import AI_CLASSES, SETTINGS
 from .routes.ai import ai_service, router as ai_router
 from .schemas import BinCreateRequest, BinUpdateRequest, FillLevelRequest
 from .services.simulator import SimulationRunner
