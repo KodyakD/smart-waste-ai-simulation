@@ -90,18 +90,18 @@ function MiniChart({ readings }: { readings: Reading[] }) {
   return <svg className="history-chart" viewBox="0 0 400 130" preserveAspectRatio="none" aria-label="Garbage fill history chart"><defs><linearGradient id="chartFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#2ba77a" stopOpacity=".22" /><stop offset="1" stopColor="#2ba77a" stopOpacity="0" /></linearGradient></defs>{[20,67,114].map(y => <line key={y} x1="12" x2="388" y1={y} y2={y} stroke="#e8eee9" strokeDasharray="4 5" />)}<polygon points={area} fill="url(#chartFill)" /><polyline points={line} fill="none" stroke="#25966c" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />{points.length > 0 && <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="4" fill="#fff" stroke="#25966c" strokeWidth="2.5" />}</svg>
 }
 
-function OverviewPage({ summary, bins, alerts, readings, onNavigate, loading }: { summary: DashboardSummary | null; bins: Bin[]; alerts: AlertItem[]; readings: Reading[]; onNavigate: (page: PageId) => void; loading: boolean }) {
+function OverviewPage({ summary, bins, alerts, readings, onNavigate, loading, config }: { summary: DashboardSummary | null; bins: Bin[]; alerts: AlertItem[]; readings: Reading[]; onNavigate: (page: PageId) => void; loading: boolean; config: AppConfig }) {
   return <>
-    <PageIntro eyebrow="MONITORING OVERVIEW" title="Good afternoon, Admin" description="A live view of your virtual waste network and system activity." action={<button className="button button-secondary" onClick={() => onNavigate('simulator')}><SlidersHorizontal size={16} /> Open simulator</button>} />
+    <PageIntro eyebrow="MONITORING OVERVIEW" title="Monitoring overview" description="A live view of your virtual waste network and system activity." action={<button className="button button-secondary" onClick={() => onNavigate('simulator')}><SlidersHorizontal size={16} /> Open simulator</button>} />
     <div className="stats-grid">
-      <StatCard label="Virtual bins" value={summary?.total_bins ?? '—'} note="Across 3 simulated zones" icon={Trash2} tone="green" />
+      <StatCard label="Virtual bins" value={summary?.total_bins ?? '—'} note="Current network" icon={Trash2} tone="green" />
       <StatCard label="Average fill level" value={summary?.average_fill ?? '—'} suffix="%" note="Network-wide capacity" icon={Gauge} tone="blue" />
-      <StatCard label="Bins need collection" value={summary?.full_bins ?? '—'} note="At 90% capacity or above" icon={AlertOctagon} tone="amber" />
+      <StatCard label="Bins need collection" value={summary?.full_bins ?? '—'} note={`At ${config.thresholds.full}% capacity or above`} icon={AlertOctagon} tone="amber" />
       <StatCard label="Unread alerts" value={summary?.unread_alerts ?? '—'} note="Requires attention" icon={Bell} tone="rose" />
     </div>
     <div className="content-grid overview-grid">
       <section className="panel bins-panel"><div className="panel-heading"><div><div className="panel-kicker">NETWORK STATUS</div><h2>Virtual bin network</h2></div><button className="text-button" onClick={() => onNavigate('simulator')}>View simulator <ArrowUpRight size={14} /></button></div>
-        {loading && !bins.length ? <div className="panel-loading">Loading virtual bins…</div> : <div className="bin-list">{bins.map(bin => <div className="bin-row" key={bin.id}><div className="bin-row-icon"><Trash2 size={18} /></div><div className="bin-row-main"><div className="bin-row-title"><strong>{bin.name}</strong><span>{bin.id}</span></div><div className="bin-row-location">{bin.location}</div><FillBar value={bin.fill_percentage} /></div><div className="bin-row-meta"><strong>{Math.round(bin.fill_percentage)}%</strong><span className={`status-tag ${bin.status}`}>{statusLabel(bin.status)}</span></div></div>)}</div>}
+        {loading && !bins.length ? <div className="panel-loading">Loading virtual bins…</div> : <div className="bin-list">{bins.map(bin => <div className="bin-row" key={bin.id}><div className="bin-row-icon"><Trash2 size={18} /></div><div className="bin-row-main"><div className="bin-row-title"><strong>{bin.name}</strong><span>{bin.id}</span></div><div className="bin-row-location">{bin.location}</div><FillBar value={bin.fill_percentage} thresholds={config.thresholds} /></div><div className="bin-row-meta"><strong>{Math.round(bin.fill_percentage)}%</strong><span className={`status-tag ${bin.status}`}>{statusLabel(bin.status)}</span></div></div>)}</div>}
       </section>
       <section className="panel activity-panel"><div className="panel-heading"><div><div className="panel-kicker">LATEST EVENTS</div><h2>Recent alerts</h2></div><button className="icon-button subtle" onClick={() => onNavigate('activity')}><ArrowUpRight size={17} /></button></div>
         {alerts.length === 0 ? <EmptyState icon={Bell} title="You're all caught up" body="New capacity and AI risk alerts will appear here." /> : <div className="activity-list">{alerts.slice(0, 4).map(alert => <div className="activity-row" key={alert.id}><div className={`activity-icon ${alert.severity}`}><AlertTriangle size={16} /></div><div className="activity-copy"><strong>{alert.title}</strong><p>{alert.message}</p><span>{timeAgo(alert.created_at)}</span></div></div>)}</div>}
@@ -111,7 +111,7 @@ function OverviewPage({ summary, bins, alerts, readings, onNavigate, loading }: 
   </>
 }
 
-function SimulatorPage({ bins, onRefresh }: { bins: Bin[]; onRefresh: () => Promise<void> }) {
+function SimulatorPage({ bins, onRefresh, config }: { bins: Bin[]; onRefresh: () => Promise<void>; config: AppConfig }) {
   const [selectedId, setSelectedId] = useState('')
   const [draftLevel, setDraftLevel] = useState(0)
   const [readings, setReadings] = useState<Reading[]>([])
@@ -120,9 +120,9 @@ function SimulatorPage({ bins, onRefresh }: { bins: Bin[]; onRefresh: () => Prom
   const selected = bins.find(bin => bin.id === selectedId) || bins[0]
   useEffect(() => { if (bins.length && !bins.some(bin => bin.id === selectedId)) setSelectedId(bins[0].id) }, [bins, selectedId])
   useEffect(() => { if (selected) setDraftLevel(Math.round(selected.fill_percentage)) }, [selected?.id, selected?.fill_percentage])
-  const loadReadings = useCallback(async () => { if (selected) { try { setReadings(await api.readings(selected.id)) } catch { /* main connection state is handled by app */ } } }, [selected?.id])
+  const loadReadings = useCallback(async () => { if (selected) { try { setReadings(await api.readings(selected.id, config.simulation.max_readings)) } catch { /* main connection state is handled by app */ } } }, [selected?.id, config.simulation.max_readings])
   useEffect(() => { loadReadings() }, [loadReadings])
-  useEffect(() => { const timer = window.setInterval(loadReadings, 3000); return () => window.clearInterval(timer) }, [loadReadings])
+  useEffect(() => { const timer = window.setInterval(loadReadings, config.simulation.interval_seconds * 1000); return () => window.clearInterval(timer) }, [loadReadings, config.simulation.interval_seconds])
   const runAction = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true); setMessage('')
     try { await action(); await onRefresh(); await loadReadings(); setMessage(success) }
@@ -133,13 +133,13 @@ function SimulatorPage({ bins, onRefresh }: { bins: Bin[]; onRefresh: () => Prom
   const isRunning = selected.is_running
   return <>
     <PageIntro eyebrow="VIRTUAL HARDWARE LAB" title="IoT simulator" description="Explore the virtual sensor, watch the bin fill, and control simulated telemetry." action={<div className="simulation-status"><span className={isRunning ? 'pulse-dot' : 'idle-dot'} />{isRunning ? 'Simulation running' : 'Simulation paused'}</div>} />
-    <div className="sim-toolbar"><div className="select-wrap"><label htmlFor="bin-select">SELECT VIRTUAL BIN</label><div className="select-control"><Trash2 size={16} /><select id="bin-select" value={selected.id} onChange={event => setSelectedId(event.target.value)}>{bins.map(bin => <option key={bin.id} value={bin.id}>{bin.id} — {bin.name}</option>)}</select><ChevronDown size={15} /></div></div><div className="sim-toolbar-meta"><span><span className="pulse-dot" /> Data source: Python simulator</span><span>Update interval: 3 sec</span></div></div>
+    <div className="sim-toolbar"><div className="select-wrap"><label htmlFor="bin-select">SELECT VIRTUAL BIN</label><div className="select-control"><Trash2 size={16} /><select id="bin-select" value={selected.id} onChange={event => setSelectedId(event.target.value)}>{bins.map(bin => <option key={bin.id} value={bin.id}>{bin.id} — {bin.name}</option>)}</select><ChevronDown size={15} /></div></div><div className="sim-toolbar-meta"><span><span className="pulse-dot" /> Data source: Python simulator</span><span>Update interval: {config.simulation.interval_seconds} sec</span></div></div>
     <div className="sim-layout">
       <section className="panel visualization-panel"><div className="panel-heading"><div><div className="panel-kicker">LIVE HARDWARE VISUALIZATION</div><h2>Inside the smart bin</h2></div><span className="tiny-chip">{selected.id}</span></div>
         <ImmersiveBinScene bin={selected} />
         <SensorReadout bin={selected} />
       </section>
-      <div className="sim-side-column"><SensorBoard /><section className="panel control-panel"><div className="panel-heading"><div><div className="panel-kicker">MANUAL CONTROLS</div><h2>Simulation controls</h2></div><SlidersHorizontal size={18} className="muted-icon" /></div>
+      <div className="sim-side-column"><section className="panel control-panel"><div className="panel-heading"><div><div className="panel-kicker">MANUAL CONTROLS</div><h2>Simulation controls</h2></div><SlidersHorizontal size={18} className="muted-icon" /></div>
         <div className="level-control"><div><span>Garbage fill level</span><strong>{draftLevel}%</strong></div><input aria-label="Set garbage fill level" type="range" min="0" max="100" value={draftLevel} onChange={event => setDraftLevel(Number(event.target.value))} style={{ '--range-progress': `${draftLevel}%` } as CSSProperties} /><div className="range-labels"><span>Empty · 0%</span><span>Full · 100%</span></div><button className="button button-secondary apply-button" disabled={busy} onClick={() => runAction(() => api.setLevel(selected.id, draftLevel), 'Virtual sensor reading updated.')}><Check size={15} /> Apply level</button></div>
         <div className="control-actions"><button className={`button ${isRunning ? 'button-secondary' : 'button-primary'}`} disabled={busy} onClick={() => runAction(() => isRunning ? api.pause(selected.id) : api.start(selected.id), isRunning ? 'Simulation paused.' : 'Simulation started.')} >{isRunning ? <Pause size={16} /> : <Play size={16} />}{isRunning ? 'Pause' : 'Start simulation'}</button><button className="button button-ghost" disabled={busy} onClick={() => runAction(() => api.reset(selected.id), 'Bin emptied and simulation paused.')}><RefreshCw size={15} /> Empty bin</button></div>
         {message && <div className="inline-feedback"><Check size={14} />{message}</div>}
@@ -150,7 +150,7 @@ function SimulatorPage({ bins, onRefresh }: { bins: Bin[]; onRefresh: () => Prom
   </>
 }
 
-function AIDetectionPage({ aiStatus, onRefresh }: { aiStatus: AIStatus | null; onRefresh: () => Promise<void> }) {
+function AIDetectionPage({ aiStatus, onRefresh, config }: { aiStatus: AIStatus | null; onRefresh: () => Promise<void>; config: AppConfig }) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
   const [busy, setBusy] = useState(false)
@@ -208,9 +208,9 @@ function AIDetectionPage({ aiStatus, onRefresh }: { aiStatus: AIStatus | null; o
       <button className="button button-primary analyze-button" disabled={!file || !isModelReady || busy} onClick={analyze}>{busy ? <><RefreshCw size={16} className="spin" /> Analyzing image…</> : <><ScanSearch size={16} /> Analyze waste image</>}</button>
       {!isModelReady && <p className="disabled-hint">Image analysis becomes available after a trained YOLO model is installed.</p>}
     </section>
-    <section className="panel result-panel"><div className="panel-heading"><div><div className="panel-kicker">MODEL OUTPUT</div><h2>Detection results</h2></div><span className="tiny-chip">5 target classes</span></div>
-      {!result ? <div className="result-placeholder"><div className="scan-illustration"><ScanSearch size={36} /><span /><i /></div><strong>Waiting for an image</strong><p>Upload a waste image and run the trained model to see detected objects, confidence scores and risk levels.</p><div className="class-chips"><span>Ordinary waste</span><span>Battery</span><span>E-waste</span><span>Aerosol</span><span>Medical / sharp</span></div></div> : <div className="result-content"><div className="result-summary"><div><span>Objects detected</span><strong>{result.detections.length}</strong></div><div><span>Model response</span><strong>{result.message}</strong></div></div>{result.detections.length ? result.detections.map(item => <div className="detection-result" key={item.id}><div><strong>{item.class_name.replace(/_/g, ' ')}</strong><span>{(item.confidence * 100).toFixed(1)}% confidence</span></div><span className={`risk-pill ${item.risk_level}`}>{item.risk_level.replace(/_/g, ' ')}</span></div>) : <div className="empty-inline">No target objects detected in this image.</div>}</div>}
-      <div className="model-classes"><div className="micro-label">MODEL CLASSES</div><div className="class-grid"><span><i className="class-dot green" /> Ordinary</span><span><i className="class-dot red" /> Battery</span><span><i className="class-dot orange" /> E-waste</span><span><i className="class-dot yellow" /> Aerosol</span><span><i className="class-dot red" /> Medical / sharp</span></div></div>
+    <section className="panel result-panel"><div className="panel-heading"><div><div className="panel-kicker">MODEL OUTPUT</div><h2>Detection results</h2></div><span className="tiny-chip">{config.ai.classes.length} target classes</span></div>
+      {!result ? <div className="result-placeholder"><div className="scan-illustration"><ScanSearch size={36} /><span /><i /></div><strong>Waiting for an image</strong><p>Upload a waste image and run the trained model to see detected objects, confidence scores and risk levels.</p><div className="class-chips">{config.ai.classes.map(className => <span key={className}>{className.replace(/_/g, " ")}</span>)}</div></div> : <div className="result-content"><div className="result-summary"><div><span>Objects detected</span><strong>{result.detections.length}</strong></div><div><span>Model response</span><strong>{result.message}</strong></div></div>{result.detections.length ? result.detections.map(item => <div className="detection-result" key={item.id}><div><strong>{item.class_name.replace(/_/g, ' ')}</strong><span>{(item.confidence * 100).toFixed(1)}% confidence</span></div><span className={`risk-pill ${item.risk_level}`}>{item.risk_level.replace(/_/g, ' ')}</span></div>) : <div className="empty-inline">No target objects detected in this image.</div>}</div>}
+      <div className="model-classes"><div className="micro-label">MODEL CLASSES</div><div className="class-grid">{config.ai.classes.map(className => <span key={className}>{className.replace(/_/g, " ")}</span>)}</div></div>
     </section></div>
     <div className="ai-disclaimer"><ShieldAlert size={16} /><span>Visual AI screening is not a chemical or biological hazard test. Low-confidence, unknown, or safety-critical items require human review.</span></div>
   </>
@@ -226,15 +226,16 @@ function ActivityPage({ alerts, detections, onRefresh }: { alerts: AlertItem[]; 
   </>
 }
 
-function SettingsPage({ aiStatus, summary }: { aiStatus: AIStatus | null; summary: DashboardSummary | null }) {
+function SettingsPage({ aiStatus, summary, config }: { aiStatus: AIStatus | null; summary: DashboardSummary | null; config: AppConfig }) {
   return <>
     <PageIntro eyebrow="CONFIGURATION" title="Project settings" description="Environment details and configuration for this local software simulation." />
-    <div className="settings-grid"><section className="panel settings-panel"><div className="panel-heading"><div><div className="panel-kicker">APPLICATION</div><h2>Runtime configuration</h2></div><Settings2 size={18} className="muted-icon" /></div><div className="settings-list"><div><span>Deployment mode</span><strong>Local laptop</strong></div><div><span>Simulation source</span><strong>Python virtual sensor</strong></div><div><span>Backend</span><strong>FastAPI REST API</strong></div><div><span>Database</span><strong>SQLite · Persistent</strong></div><div><span>Virtual bins</span><strong>{summary?.total_bins ?? '—'}</strong></div><div><span>Simulation interval</span><strong>3 seconds</strong></div></div></section><section className="panel settings-panel"><div className="panel-heading"><div><div className="panel-kicker">ARTIFICIAL INTELLIGENCE</div><h2>YOLO model configuration</h2></div><Sparkles size={18} className="muted-icon" /></div><div className={`ai-config-card ${aiStatus?.configured ? 'ready' : ''}`}><div className="ai-config-icon"><Cpu size={22} /></div><div><strong>{aiStatus?.configured ? 'Model loaded' : 'Model not installed'}</strong><p>{aiStatus?.message || 'Checking model configuration…'}</p></div></div><div className="settings-list"><div><span>Architecture</span><strong>YOLO object detection</strong></div><div><span>Target classes</span><strong>5 waste categories</strong></div><div><span>Inference device</span><strong>CPU / automatic</strong></div><div><span>Model weights</span><strong className="path-value">backend/ai/weights/best.pt</strong></div></div><div className="settings-help">Follow <code>backend/ai/README.md</code> to prepare a dataset and train custom weights.</div></section></div>
+    <div className="settings-grid"><section className="panel settings-panel"><div className="panel-heading"><div><div className="panel-kicker">APPLICATION</div><h2>Runtime configuration</h2></div><Settings2 size={18} className="muted-icon" /></div><div className="settings-list"><div><span>Deployment mode</span><strong>{config.app.environment}</strong></div><div><span>Simulation source</span><strong>Python virtual sensor</strong></div><div><span>Backend</span><strong>FastAPI REST API</strong></div><div><span>Database</span><strong>SQLite · Persistent</strong></div><div><span>Virtual bins</span><strong>{summary?.total_bins ?? '—'}</strong></div><div><span>Simulation interval</span><strong>{config.simulation.interval_seconds} seconds</strong></div></div></section><section className="panel settings-panel"><div className="panel-heading"><div><div className="panel-kicker">ARTIFICIAL INTELLIGENCE</div><h2>YOLO model configuration</h2></div><Sparkles size={18} className="muted-icon" /></div><div className={`ai-config-card ${aiStatus?.configured ? 'ready' : ''}`}><div className="ai-config-icon"><Cpu size={22} /></div><div><strong>{aiStatus?.configured ? 'Model loaded' : 'Model not installed'}</strong><p>{aiStatus?.message || 'Checking model configuration…'}</p></div></div><div className="settings-list"><div><span>Architecture</span><strong>{config.ai.architecture}</strong></div><div><span>Target classes</span><strong>{config.ai.classes.length} waste categories</strong></div><div><span>Inference device</span><strong>{config.ai.device}</strong></div><div><span>Model weights</span><strong className="path-value">{config.ai.model_path}</strong></div></div><div className="settings-help">Follow <code>backend/ai/README.md</code> to prepare a dataset and train custom weights.</div></section></div>
     <div className="project-note"><div className="notice-icon"><CircleHelp size={19} /></div><div><strong>Simulation-only project</strong><p>No physical electronics are connected. Virtual readings are generated by the backend and stored as simulated telemetry. The AI module requires a genuinely trained model before it can return detections.</p></div></div>
   </>
 }
 
 export default function App() {
+  const { config, loading: configLoading, error: configError } = useConfig()
   const [page, setPage] = useState<PageId>('overview')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
@@ -246,30 +247,35 @@ export default function App() {
   const [backendOnline, setBackendOnline] = useState(false)
   const [loading, setLoading] = useState(true)
   const [lastSync, setLastSync] = useState(new Date())
+  const [backendError, setBackendError] = useState('')
 
   const refresh = useCallback(async () => {
     try {
       const [dashboardData, alertData, detectionData, aiData] = await Promise.all([
         api.dashboard(), api.alerts(), api.detections(), api.aiStatus(),
       ])
-      setSummary(dashboardData); setBins(dashboardData.bins); setAlerts(alertData); setDetections(detectionData); setAIStatus(aiData); setBackendOnline(true); setLastSync(new Date())
+      setSummary(dashboardData); setBins(dashboardData.bins); setAlerts(alertData); setDetections(detectionData); setAIStatus(aiData); setBackendOnline(true); setBackendError(''); setLastSync(new Date())
       if (dashboardData.bins.length) {
         const preferred = dashboardData.bins.find(bin => bin.is_running) || dashboardData.bins[0]
-        try { setReadings(await api.readings(preferred.id)) } catch { /* next poll retries */ }
+        try { setReadings(await api.readings(preferred.id, config?.simulation.max_readings || 48)) } catch { /* next poll retries */ }
       }
-    } catch {
+    } catch (cause) {
       setBackendOnline(false)
+      setBackendError(cause instanceof Error ? cause.message : 'Backend request failed')
     } finally { setLoading(false) }
-  }, [])
+  }, [config?.simulation.max_readings])
 
-  useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 3000); return () => window.clearInterval(timer) }, [refresh])
+  useEffect(() => { if (!config) return; void refresh(); const timer = window.setInterval(() => void refresh(), config.simulation.interval_seconds * 1000); return () => window.clearInterval(timer) }, [refresh, config])
+
+  if (!config) return <main className="config-gate"><strong>{configLoading ? "Loading application configuration…" : "Configuration unavailable"}</strong><p>{configError || "The backend did not return application configuration."}</p></main>
 
   return <div className="app-shell"><Sidebar active={page} onNavigate={setPage} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} /><main className="main-shell"><Topbar page={page} onMenu={() => setMobileOpen(true)} backendOnline={backendOnline} /><div className="main-content">
-    {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} loading={loading} />}
-    {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} />}
-    {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} />}
+    {backendError && <div className="error-box backend-error">{backendError}</div>}
+    {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} loading={loading} config={config} />}
+    {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} />}
+    {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
     {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} />}
-    {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} />}
+    {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} config={config} />}
     <footer className="app-footer"><span>© 2026 EcoMind Simulation</span><span><span className="footer-dot" /> Last sync {lastSync.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span><span>Built for intelligent waste research</span></footer>
   </div></main></div>
 }
