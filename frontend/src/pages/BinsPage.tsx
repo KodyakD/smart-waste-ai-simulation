@@ -3,11 +3,11 @@ import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { api } from '../api'
 import type { Bin } from '../types'
 
-type Props = { bins: Bin[]; onRefresh: () => Promise<void> }
+type Props = { bins: Bin[]; onRefresh: () => Promise<void>; loading: boolean; backendOnline: boolean }
 
 const emptyDraft = { id: '', name: '', location: '', capacity_cm: '100', fill_percentage: '0' }
 
-export default function BinsPage({ bins, onRefresh }: Props) {
+export default function BinsPage({ bins, onRefresh, loading, backendOnline }: Props) {
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState(emptyDraft)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -98,7 +98,7 @@ export default function BinsPage({ bins, onRefresh }: Props) {
       )}
       <section className="panel bins-management-panel">
         <div className="panel-heading"><div><div className="panel-kicker">REGISTERED CONTAINERS</div><h2>Bins</h2></div><span className="tiny-chip">{bins.length} records</span></div>
-        {bins.length === 0 ? <div className="empty-state"><div className="empty-icon"><Trash2 size={22} /></div><strong>No virtual bins</strong><p>Add your first bin to make it available in the simulator.</p><button className="button button-primary" onClick={() => setAdding(true)}><Plus size={15} /> Add bin</button></div> :
+        {loading && bins.length === 0 ? <div className="panel-loading">Loading virtual bins…</div> : !backendOnline && bins.length === 0 ? <div className="empty-state"><strong>Backend offline</strong><p>Connect the backend to load and manage virtual bins.</p></div> : bins.length === 0 ? <div className="empty-state"><div className="empty-icon"><Trash2 size={22} /></div><strong>No virtual bins</strong><p>Add your first bin to make it available in the simulator.</p><button className="button button-primary" onClick={() => setAdding(true)}><Plus size={15} /> Add bin</button></div> :
           <div className="telemetry-table-wrap"><table className="data-table bins-management-table"><thead><tr><th>ID</th><th>Name</th><th>Location</th><th>Empty distance</th><th>Fill</th><th>Status</th><th>Actions</th></tr></thead><tbody>
             {bins.map(bin => <tr key={bin.id}>
               <td><strong>{bin.id}</strong></td>

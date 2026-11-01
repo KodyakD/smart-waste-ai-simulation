@@ -285,7 +285,7 @@ export default function App() {
     {backendError && <div className="error-box backend-error">{backendError}</div>}
     {page === 'overview' && <OverviewPage summary={summary} bins={bins} alerts={alerts} readings={readings} onNavigate={setPage} onNeedCollection={() => { setSimulatorBinId(bins.find(bin => bin.status === 'full')?.id ?? null); setPage('simulator') }} loading={loading} config={config} backendOnline={backendOnline} />}
     {page === 'simulator' && <SimulatorPage bins={bins} onRefresh={refresh} config={config} initialBinId={simulatorBinId} />}
-    {page === 'bins' && <BinsPage bins={bins} onRefresh={refresh} />}
+    {page === 'bins' && <BinsPage bins={bins} onRefresh={refresh} loading={loading} backendOnline={backendOnline} />}
     {page === 'ai' && <AIDetectionPage aiStatus={aiStatus} onRefresh={refresh} config={config} />}
     {page === 'activity' && <ActivityPage alerts={alerts} detections={detections} onRefresh={refresh} backendOnline={backendOnline} />}
     {page === 'settings' && <SettingsPage aiStatus={aiStatus} summary={summary} config={config} />}
