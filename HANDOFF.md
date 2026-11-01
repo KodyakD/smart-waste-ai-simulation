@@ -192,7 +192,7 @@ cd frontend; npm run build
 Then a manual pass: Overview → Bins → Simulator → Alerts → Settings, plus one
 AI page load. Commit per phase; name the skills used in each commit message.
 
-## Phase 9 — AI training and validation (partially blocked by class coverage)
+## Phase 9 — AI training and validation (delivered, one data gap)
 
 The current dataset manifest and builder are already in the repository.
 The redistributable CC BY 4.0 detection set covers `ordinary_waste`, `battery`,
@@ -204,11 +204,19 @@ The API now reports `supported_classes` and `unsupported_classes` from both
 unsupported class are saved for manual review, not treated as confirmed hazard
 detections. Do not describe all five classes as trainable or supported.
 
-Training has not been run and no weights are present. The image folders are
-ignored by Git, so verify the local assets with `backend/ai/build_dataset.py
---check` before training. Never commit raw images, prepared images, archives,
-or model weights. A licensed, annotated source is still required before
-`aerosol` or `medical_sharp` can be enabled.
+The dataset is built: 5,993 images / 21,033 boxes in `backend/ai/datasets/waste`,
+sources and licenses recorded in `backend/ai/datasets.md`. Do not re-fetch or
+re-merge; run `python backend/ai/build_dataset.py --check` to verify.
+
+`backend/ai/train.py` has `check` / `train` / `eval`. `check` lists per-split,
+per-class box counts and warns about empty classes; `train` fine-tunes `yolo11n`
+and copies `best.pt` to `backend/ai/weights/`; `eval` writes `backend/ai/report.md`
+from the test split. Image folders are ignored by Git. Never commit raw images,
+prepared images, archives, or model weights.
+
+Remaining gap: `aerosol` and `medical_sharp` have **zero** annotated boxes. The
+model cannot detect them and no report may imply it can. Closing this needs a
+licensed, annotated source for those two classes, not more code.
 
 
 ## Implementation update — 2026-11-01
@@ -230,3 +238,15 @@ Local verification is still pending. The implementation environment could not cl
 Phase 9 is partially blocked by class coverage: the documented redistributable dataset covers ordinary waste, batteries and e-waste; aerosol and medical sharps remain unsupported. `/api/v1/config` and `/api/v1/ai/status` now list supported and unsupported classes separately. Known class aliases are normalized; unsupported predictions become `needs_review` and do not create hazardous-waste alerts. The dataset builder exists, but local ignored image assets could not be inspected or trained in this environment. No model weights were generated, and no placeholder predictions were added.
 
 Process skills applied: brainstorming, writing-plans, spec-driven-development, incremental-implementation, api-and-interface-design, frontend-design, frontend-ui-engineering, systematic-debugging, debugging-and-error-recovery, test-driven-development, webapp-testing, browser-testing-with-devtools, verification-before-completion, code-review-and-quality, code-simplification, security-and-hardening, Ultralytics yolo and yolo-datasets.
+=======
+## Phase 9 — AI datasets (delivered, one gap)
+
+Dataset links arrived and the dataset is built: 5,993 images / 21,033 boxes in
+`backend/ai/datasets/waste`, sources and licenses recorded in
+`backend/ai/datasets.md`. Do not re-fetch or re-merge; run
+`python backend/ai/build_dataset.py --check` to verify.
+
+Remaining gap: `aerosol` and `medical_sharp` have **zero** annotated boxes. The
+model cannot detect them, and no report may imply it can. Closing this needs a
+labelled source for those two classes, not more code.
+>>>>>>> local/ai-datasets

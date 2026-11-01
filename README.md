@@ -116,45 +116,47 @@ Use the **Bins** page to create, edit or delete virtual bins. Capacity changes r
 
 ## AI model setup
 
-The repository includes a source manifest and a YOLO dataset builder. The
-redistributable CC BY 4.0 detection source currently covers three target
-classes: `ordinary_waste`, `battery` and `electronic_waste`. The classes
+The dataset is built from public sources (see `backend/ai/datasets.md` for
+licenses and limits). The redistributable CC BY 4.0 detection source currently
+covers three target classes: `ordinary_waste`, `battery` and `electronic_waste`.
 `aerosol` and `medical_sharp` remain unsupported because there is no usable
 licensed annotated source for them. Read `backend/ai/datasets.md` and
 `backend/ai/sources.json` before building or training.
 
-1. Build the prepared dataset from the repository root (this downloads only
-   sources marked redistributable and writes image files into gitignored
-   folders):
+1. Install the optional dependencies (the CUDA build of PyTorch is needed for
+   GPU training):
 
    ```powershell
-   cd backend\\ai
-   ..\\.venv\\Scripts\\python.exe build_dataset.py --all
-   ```
-
-2. Confirm the resulting split counts and class histogram match
-   `backend/ai/datasets.md`. You can re-run validation without downloading:
-
-   ```powershell
-   ..\\.venv\\Scripts\\python.exe build_dataset.py --check
-   ```
-
-   An empty `aerosol` or `medical_sharp` histogram is expected for the
-   current licensed sources. Do not claim those classes are trainable.
-
-3. Install the optional YOLO dependency:
-
-   ```powershell
-   cd ..\\..
    cd backend
+   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
    pip install -r requirements-ai.txt
    cd ..
    ```
 
-4. Train using the included helper from the repository root:
+2. Build the prepared dataset (this downloads only sources marked
+   redistributable and writes image files into gitignored folders):
 
    ```powershell
-   python backend/ai/train.py
+   cd backend\ai
+   ..\.venv\Scripts\python.exe build_dataset.py --all
+   ```
+
+   Confirm the split counts and class histogram match `backend/ai/datasets.md`;
+   you can re-run validation without downloading:
+
+   ```powershell
+   ..\.venv\Scripts\python.exe build_dataset.py --check
+   ```
+
+   An empty `aerosol` or `medical_sharp` histogram is expected for the current
+   licensed sources. Do not claim those classes are trainable.
+
+3. Validate and train, from `backend/`:
+
+   ```powershell
+   python ai/train.py check                 # per-class box counts, warns about empty classes
+   python ai/train.py train --epochs 80     # yolo11n on GPU 0, copies best.pt when done
+   python ai/train.py eval                  # test split -> backend/ai/report.md
    ```
 
    The configured target order in `backend/ai/dataset.yaml` remains five
@@ -162,9 +164,10 @@ licensed annotated source for them. Read `backend/ai/datasets.md` and
    training boxes for the first three. The app reports that distinction and
    sends any unsupported-class output to manual review.
 
-5. Copy the trained `best.pt` to `backend/ai/weights/best.pt`, then restart
-   FastAPI. `/api/v1/ai/status` will report whether real weights are loaded
-   and list supported and unsupported classes separately.
+4. Restart FastAPI. `/api/v1/ai/status` will report whether real weights are
+   loaded and list supported and unsupported classes separately. `train.py`
+   copies the winning run's `best.pt` to `backend/ai/weights/best.pt`; if you
+   trained elsewhere, copy it there yourself.
 
 Dataset images, raw archives and model weights are gitignored and must not be
 committed. Preserve the source attribution and license terms in
