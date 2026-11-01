@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
 
-from ..config import BASE_DIR
+from ..config import AI_CLASSES, BASE_DIR, SETTINGS
 
 
 CLASS_RISKS = {
@@ -25,8 +24,7 @@ CLASS_RISKS = {
 class AIService:
     def __init__(self) -> None:
         base_dir = BASE_DIR
-        configured_path = os.getenv("YOLO_MODEL_PATH", "ai/weights/best.pt")
-        model_path = Path(configured_path)
+        model_path = Path(SETTINGS.ai_model_path)
         if not model_path.is_absolute():
             model_path = (base_dir / model_path).resolve()
         self.model_path = model_path
@@ -53,21 +51,20 @@ class AIService:
             "configured": self.model is not None,
             "model_path": str(self.model_path),
             "message": "Custom YOLO model is ready." if self.model is not None else self.error,
-            "classes": [
-                "ordinary_waste",
-                "battery",
-                "electronic_waste",
-                "aerosol",
-                "medical_sharp",
-            ],
+            "classes": list(AI_CLASSES),
         }
 
-    def predict(self, image_path: Path, confidence_threshold: float = 0.35) -> list[dict[str, Any]]:
+    def predict(self, image_path: Path, confidence_threshold: float | None = None) -> list[dict[str, Any]]:
         self.load()
         if self.model is None:
             raise RuntimeError(self.error or "AI model is not configured.")
 
-        results = self.model.predict(source=str(image_path), conf=confidence_threshold, verbose=False)
+        results = self.model.predict(
+            source=str(image_path),
+            conf=SETTINGS.ai_confidence_threshold if confidence_threshold is None else confidence_threshold,
+            device=SETTINGS.ai_device,
+            verbose=False,
+        )
         predictions: list[dict[str, Any]] = []
         for result in results:
             names = result.names
