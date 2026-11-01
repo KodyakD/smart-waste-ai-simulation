@@ -8,10 +8,10 @@ The first version includes:
 - A FastAPI backend with SQLite persistence.
 - Three virtual garbage bins with simulated ultrasonic distance readings.
 - A visual bin/sensor/controller simulator with start, pause, reset, and manual fill controls.
-- A YOLO object-detection integration point for the five planned waste classes.
-- A training scaffold and dataset layout for a custom YOLO model.
+- A YOLO object-detection integration for five target class names, with dataset support reported separately.
+- A dataset manifest, licensed-source mapping, dataset builder and training scaffold.
 
-> **AI honesty note:** the repository does not contain trained model weights or a ready-made hazardous-waste dataset. Until you add a trained `best.pt` model, the AI page reports that the model is not configured. It does not invent predictions. The training scaffold is included.
+> **AI honesty note:** the documented redistributable detection dataset currently covers three classes: `ordinary_waste`, `battery` and `electronic_waste`. `aerosol` and `medical_sharp` remain unsupported because no licensed annotated source is available for them. No trained weights are currently included, so `/api/v1/ai/status` reports whether a real model is configured. Unsupported class labels are flagged for manual review; the app never fabricates predictions.
 
 ## Architecture
 
@@ -116,9 +116,18 @@ Use the **Bins** page to create, edit or delete virtual bins. Capacity changes r
 
 ## AI model setup (optional next phase)
 
-The AI page and API are scaffolded, but inference is disabled until a custom model is available.
+The AI page and API are scaffolded, but inference is disabled until a custom model is available. The checked-in manifest and builder prepare a redistributable three-class training set. Read `backend/ai/datasets.md` and `backend/ai/sources.json` before downloading or training. Do not merge the non-redistributable or unresolved sources listed there.
 
-1. Prepare a YOLO object-detection dataset with these exact class names/order:
+1. From the repository root, verify the prepared dataset locally. The image folders are gitignored and are not stored in Git:
+
+   ```powershell
+   cd backend\\ai
+   ..\\.venv\\Scripts\\python.exe build_dataset.py --check
+   ```
+
+2. The target class order in `backend/ai/dataset.yaml` remains five classes for API compatibility. Only `ordinary_waste`, `battery` and `electronic_waste` have licensed training boxes; `aerosol` and `medical_sharp` are reported as unsupported until valid annotated sources are added.
+
+3. Install optional dependencies:
    - `ordinary_waste`
    - `battery`
    - `electronic_waste`
@@ -147,7 +156,7 @@ The AI page and API are scaffolded, but inference is disabled until a custom mod
 5. Copy the trained `best.pt` to `backend/ai/weights/best.pt`.
 6. Restart FastAPI. The AI status endpoint should report that the model is ready.
 
-Use a legally usable, well-labeled dataset. Ensure the training, validation, and test sets are separated by source/location where possible to reduce data leakage. Measure precision, recall, mAP50, mAP50-95, and per-class performance. A broad `ordinary_waste` class may be difficult to learn; define its scope carefully.
+Only train on datasets whose licenses permit the intended use. Ensure training, validation and test sets are separated by source/location where possible to reduce data leakage. Do not claim model support for classes with no training examples. Measure precision, recall, mAP50, mAP50-95, and per-class performance. A broad `ordinary_waste` class may be difficult to learn; define its scope carefully.
 
 ### AI safety and limitations
 

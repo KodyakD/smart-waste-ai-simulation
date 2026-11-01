@@ -13,21 +13,16 @@ Never do these:
 - Hardcode a domain value in the frontend (threshold, interval, distance,
   class name, path, count).
 - Add a dependency without asking.
-- Touch `backend/app/services/ai_service.py` inference logic, or train a model,
-  until the dataset links arrive (Phase 9, blocked).
+- Do not change `backend/app/services/ai_service.py` inference logic or train a
+  model until the licensed dataset split has been validated locally. The current
+  documented set covers only three of the five target classes.
 - Reformat files you did not need to change.
 - Claim "done" without `npm run build` and `pytest` passing.
 
-## Current state (verified 2026-11-01)
+## Initial baseline (2026-11-01, historical)
 
-- `main` = `feature/immersive-iot-visualization` = `b534ac5`, public repo
-  `KodyakD/smart-waste-ai-simulation`.
-- Backend runs on `127.0.0.1:8000`, frontend on `127.0.0.1:5173`.
-- Simulation, readings, alerts, image upload all work.
-- Build passes. No AI weights exist; `/ai/status` correctly reports
-  `configured: false`.
-- Known problems: hardcoded values (AGENTS.md §1), no bin CRUD, dead overview
-  controls, squeezed layout, fake ESP32 art, alerting untested.
+This was the state before the implementation update at the end of this file.
+The current implementation and local verification status are recorded there.
 
 ## Phase 0 — Baseline
 
@@ -197,12 +192,23 @@ cd frontend; npm run build
 Then a manual pass: Overview → Bins → Simulator → Alerts → Settings, plus one
 AI page load. Commit per phase; name the skills used in each commit message.
 
-## Phase 9 — AI datasets (blocked)
+## Phase 9 — AI training and validation (partially blocked by class coverage)
 
-Do not start. Waiting on the human for dataset links. When they arrive, record
-them in `backend/ai/datasets.md` (URL, license, classes, image count, split),
-map classes to `config.ai.classes` order, and only then touch training. No
-dataset is ever committed to the repo.
+The current dataset manifest and builder are already in the repository.
+The redistributable CC BY 4.0 detection set covers `ordinary_waste`, `battery`,
+and `electronic_waste`. It does not cover `aerosol` or `medical_sharp`; the
+other candidate sources are excluded or have unresolved redistribution terms.
+
+The API now reports `supported_classes` and `unsupported_classes` from both
+`/api/v1/config` and `/api/v1/ai/status`. Predictions whose labels map to an
+unsupported class are saved for manual review, not treated as confirmed hazard
+detections. Do not describe all five classes as trainable or supported.
+
+Training has not been run and no weights are present. The image folders are
+ignored by Git, so verify the local assets with `backend/ai/build_dataset.py
+--check` before training. Never commit raw images, prepared images, archives,
+or model weights. A licensed, annotated source is still required before
+`aerosol` or `medical_sharp` can be enabled.
 
 
 ## Implementation update — 2026-11-01
@@ -220,6 +226,6 @@ The user requested the remaining work to be implemented in one run, directly on 
 
 Local verification is still pending. The implementation environment could not clone the repository because outbound GitHub DNS resolution was unavailable, and the user will run `pytest`, `npm run build`, API smoke checks and UI click-through locally. No build or test pass is claimed here.
 
-Phase 9 remains blocked until the user supplies dataset URLs and licenses. No dataset images were generated, downloaded or committed, and the AI inference implementation was not replaced with placeholder predictions.
+Phase 9 is partially blocked by class coverage: the documented redistributable dataset covers ordinary waste, batteries and e-waste; aerosol and medical sharps remain unsupported. The dataset builder exists, but local ignored image assets could not be inspected or trained in this environment. No model weights were generated, and no placeholder predictions were added.
 
-Process skills applied: brainstorming, writing-plans, spec-driven-development, incremental-implementation, api-and-interface-design, frontend-design, frontend-ui-engineering, systematic-debugging, debugging-and-error-recovery, test-driven-development, webapp-testing, browser-testing-with-devtools, verification-before-completion, code-review-and-quality, code-simplification and security-and-hardening.
+Process skills applied: brainstorming, writing-plans, spec-driven-development, incremental-implementation, api-and-interface-design, frontend-design, frontend-ui-engineering, systematic-debugging, debugging-and-error-recovery, test-driven-development, webapp-testing, browser-testing-with-devtools, verification-before-completion, code-review-and-quality, code-simplification, security-and-hardening, Ultralytics yolo and yolo-datasets.
