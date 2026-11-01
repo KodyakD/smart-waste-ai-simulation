@@ -1,3 +1,4 @@
+import { Radio } from 'lucide-react'
 import type { Bin } from './types'
 import './immersive-scene.css'
 
