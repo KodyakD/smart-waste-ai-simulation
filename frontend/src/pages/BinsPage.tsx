@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { api } from '../api'
 import type { Bin } from '../types'
@@ -15,7 +15,7 @@ export default function BinsPage({ bins, onRefresh }: Props) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  const createBin = async (event: React.FormEvent<HTMLFormElement>) => {
+  const createBin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setBusy(true)
     setError('')

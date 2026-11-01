@@ -137,7 +137,7 @@ def delete_bin(bin_id: str) -> None:
 
 
 @app.get("/api/v1/bins/{bin_id}/readings")
-def bin_readings(bin_id: str, limit: int = 60) -> list[dict[str, Any]]:
+def bin_readings(bin_id: str, limit: int = SETTINGS.max_readings) -> list[dict[str, Any]]:
     if database.get_bin(bin_id) is None:
         raise HTTPException(status_code=404, detail="Virtual bin not found")
     return database.get_readings(bin_id, limit)
@@ -247,7 +247,7 @@ async def detect_waste(file: UploadFile = File(...)) -> dict[str, Any]:
     destination.write_bytes(content)
 
     try:
-        predictions = ai_service.predict(destination)
+        predictions = ai_service.predict(destination, confidence_threshold=SETTINGS.ai_confidence_threshold)
     except Exception as exc:
         destination.unlink(missing_ok=True)
         raise HTTPException(status_code=500, detail=f"AI inference failed: {exc}")

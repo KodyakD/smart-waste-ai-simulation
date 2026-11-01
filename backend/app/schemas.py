@@ -32,9 +32,9 @@ class BinUpdateRequest(BaseModel):
 
     @field_validator("name", "location")
     @classmethod
-    def reject_blank_text(cls, value: str | None) -> str | None:
+    def reject_blank_text(cls, value: str | None) -> str:
         if value is None:
-            return value
+            raise ValueError("Value cannot be null")
         cleaned = value.strip()
         if not cleaned:
             raise ValueError("Value cannot be blank")
