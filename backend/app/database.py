@@ -143,8 +143,8 @@ def get_bin(bin_id: str) -> dict[str, Any] | None:
 def set_bin_running(bin_id: str, running: bool) -> dict[str, Any] | None:
     with connect() as db:
         db.execute(
-            "UPDATE bins SET is_running = ?, last_updated = ? WHERE id = ?",
-            (1 if running else 0, utc_now(), bin_id),
+            "UPDATE bins SET is_running = ? WHERE id = ?",
+            (1 if running else 0, bin_id),
         )
         db.commit()
     return get_bin(bin_id)
@@ -324,7 +324,6 @@ def update_bin(bin_id: str, updates: dict[str, Any]) -> dict[str, Any] | None:
     values = {key: value for key, value in updates.items() if key in allowed}
     if not values:
         return get_bin(bin_id)
-    values["last_updated"] = utc_now()
     with connect() as db:
         row = db.execute(
             "SELECT fill_percentage, capacity_cm FROM bins WHERE id = ?", (bin_id,)
