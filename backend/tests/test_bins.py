@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from fastapi.testclient import TestClient
 import pytest
 
@@ -124,3 +126,27 @@ def test_capacity_migration_preserves_existing_bin_data(tmp_path, monkeypatch):
     assert migrated is not None
     assert migrated["name"] == "Legacy"
     assert migrated["capacity_cm"] == 100
+
+
+
+def test_init_db_reconciles_persisted_status_and_distance_after_config_change(tmp_path, monkeypatch):
+    monkeypatch.setattr(database, "DB_PATH", tmp_path / "reconcile.db")
+    database.init_db()
+    before = database.get_bin("BIN-003")
+    assert before is not None
+    assert before["status"] == "almost_full"
+
+    updated_settings = replace(
+        database.SETTINGS,
+        fill_full_threshold=85,
+        sensor_full_distance_cm=5,
+    )
+    monkeypatch.setattr(database, "SETTINGS", updated_settings)
+    database.init_db()
+
+    after = database.get_bin("BIN-003")
+    assert after is not None
+    assert after["status"] == "full"
+    assert after["distance_cm"] == database.distance_for_fill(
+        after["fill_percentage"], after["capacity_cm"]
+    )

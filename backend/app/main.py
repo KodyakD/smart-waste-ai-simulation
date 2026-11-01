@@ -28,6 +28,16 @@ simulator = SimulationRunner(interval_seconds=INTERVAL)
 ai_service = AIService()
 
 
+def apply_dataset_class_support(prediction: dict[str, Any]) -> dict[str, Any]:
+    canonical = AI_CLASS_ALIASES.get(
+        prediction["class_name"], prediction["class_name"]
+    )
+    prediction["class_name"] = canonical
+    if canonical in AI_UNSUPPORTED_CLASSES:
+        prediction["risk_level"] = "needs_review"
+    return prediction
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     database.init_db()
@@ -261,11 +271,7 @@ async def detect_waste(file: UploadFile = File(...)) -> dict[str, Any]:
 
     saved = []
     for prediction in predictions:
-        prediction["class_name"] = AI_CLASS_ALIASES.get(
-            prediction["class_name"], prediction["class_name"]
-        )
-        if prediction["class_name"] in AI_UNSUPPORTED_CLASSES:
-            prediction["risk_level"] = "needs_review"
+        prediction = apply_dataset_class_support(prediction)
         saved.append(database.create_detection(
             filename=stored_name,
             original_filename=safe_name,

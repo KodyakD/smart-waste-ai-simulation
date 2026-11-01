@@ -27,3 +27,34 @@ def test_ai_status_endpoint_reports_class_coverage():
     assert response["classes"] == list(AI_CLASSES)
     assert response["supported_classes"] == list(AI_SUPPORTED_CLASSES)
     assert response["unsupported_classes"] == list(AI_UNSUPPORTED_CLASSES)
+
+
+
+def test_unsupported_class_aliases_are_manual_review():
+    from app.main import apply_dataset_class_support
+
+    for alias in ("aerosol_container", "medical_waste", "sharp"):
+        prediction = apply_dataset_class_support({
+            "class_name": alias,
+            "risk_level": "high_concern",
+        })
+        assert prediction["class_name"] in AI_UNSUPPORTED_CLASSES
+        assert prediction["risk_level"] == "needs_review"
+
+
+def test_supported_class_aliases_are_canonicalized():
+    from app.main import apply_dataset_class_support
+
+    battery = apply_dataset_class_support({
+        "class_name": "batteries",
+        "risk_level": "potential_hazard",
+    })
+    electronic = apply_dataset_class_support({
+        "class_name": "e_waste",
+        "risk_level": "potential_hazard",
+    })
+
+    assert battery["class_name"] == "battery"
+    assert battery["risk_level"] == "potential_hazard"
+    assert electronic["class_name"] == "electronic_waste"
+    assert electronic["risk_level"] == "potential_hazard"
