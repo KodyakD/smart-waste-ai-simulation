@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import type { CSSProperties, ReactNode } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { CSSProperties } from 'react'
 import {
-  Activity, AlertOctagon, AlertTriangle, ArrowUpRight, Bell, Camera, Check, ChevronDown,
-  CircleHelp, Cpu, Database, FileImage, Gauge, LayoutDashboard, Leaf, Menu,
-  Pause, Play, Radio, RefreshCw, ScanSearch, Settings2, ShieldAlert, SlidersHorizontal,
-  Sparkles, Trash2, Upload, X,
+  Activity, AlertOctagon, AlertTriangle, ArrowUpRight, Bell, Check, ChevronDown,
+  CircleHelp, Cpu, Database, Gauge, LayoutDashboard, Leaf, Menu,
+  Pause, Play, Radio, RefreshCw, ScanSearch, Settings2, SlidersHorizontal,
+  Sparkles, Trash2, X,
 } from 'lucide-react'
 import { api } from './api'
 import { useConfig } from './ConfigContext'
 import ImmersiveBinScene from './ImmersiveBinScene'
 import DeviceTelemetryPanel from './components/DeviceTelemetryPanel'
 import BinsPage from './pages/BinsPage'
+import AIDetectionPage from './pages/AIDetectionPage'
+import PageIntro from './components/PageIntro'
 import type { AIStatus, Alert as AlertItem, AppConfig, Bin, DashboardSummary, Detection, Reading } from './types'
 
 const NAV_ITEMS = [
@@ -60,10 +62,6 @@ function Sidebar({ active, onNavigate, mobileOpen, onClose, unreadAlerts, enviro
 function Topbar({ page, onMenu, backendOnline, unreadAlerts, onNavigate }: { page: PageId; onMenu: () => void; backendOnline: boolean; unreadAlerts: number; onNavigate: (page: PageId) => void }) {
   const item = NAV_ITEMS.find(n => n.id === page)
   return <header className="topbar"><div className="topbar-left"><button className="icon-button menu-trigger" onClick={onMenu}><Menu size={20} /></button><div className="breadcrumb"><span>Workspace</span><span className="crumb-slash">/</span><strong>{item?.label || 'Overview'}</strong></div></div><div className="topbar-right"><div className={`connection-pill ${backendOnline ? 'online' : 'offline'}`}><span className="pulse-dot" />{backendOnline ? 'Backend connected' : 'Backend offline'}</div><div className="topbar-divider" /><button className="icon-button top-notice" title="Notifications" aria-label={`Open alerts and activity, ${unreadAlerts} unread`} onClick={() => onNavigate('activity')}><Bell size={18} />{unreadAlerts > 0 && <span className="notification-count">{unreadAlerts}</span>}</button></div></header>
-}
-
-function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) {
-  return <div className="page-intro"><div><div className="eyebrow">{eyebrow}</div><h1>{title}</h1><p>{description}</p></div>{action && <div className="intro-action">{action}</div>}</div>
 }
 
 function StatCard({ label, value, suffix, note, icon: Icon, tone = 'green', onClick }: { label: string; value: string | number; suffix?: string; note: string; icon: typeof Activity; tone?: string; onClick: () => void }) {
@@ -152,72 +150,6 @@ function SimulatorPage({ bins, onRefresh, config, initialBinId }: { bins: Bin[];
       </section><DeviceTelemetryPanel bin={selected} config={config} /></div>
     </div>
     <section className="panel telemetry-panel"><div className="panel-heading"><div><div className="panel-kicker">RECENT SENSOR DATA</div><h2>Telemetry history</h2></div><span className="tiny-chip">Latest {readings.length} readings</span></div><div className="telemetry-table-wrap">{readingsError && <div className="error-box">{readingsError}</div>}<table className="data-table"><thead><tr><th>Timestamp</th><th>Distance</th><th>Fill level</th><th>Status</th><th>Source</th></tr></thead><tbody>{readings.slice().reverse().slice(0, 7).map(reading => <tr key={reading.id}><td>{new Date(reading.created_at).toLocaleString()}</td><td>{reading.distance_cm.toFixed(1)} cm</td><td><strong>{Math.round(reading.fill_percentage)}%</strong></td><td><span className={`status-tag ${reading.status}`}>{statusLabel(reading.status)}</span></td><td><span className="source-label"><Radio size={12} /> Simulated</span></td></tr>)}</tbody></table>{readings.length === 0 && <div className="chart-empty">No readings yet.</div>}</div></section>
-  </>
-}
-
-function AIDetectionPage({ aiStatus, onRefresh, config }: { aiStatus: AIStatus | null; onRefresh: () => Promise<void>; config: AppConfig }) {
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<{ message: string; detections: Detection[] } | null>(null)
-  const [error, setError] = useState('')
-  const [cameraOpen, setCameraOpen] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const isModelReady = Boolean(aiStatus?.configured)
-
-  useEffect(() => () => { streamRef.current?.getTracks().forEach(track => track.stop()) }, [])
-  const selectFile = (next: File | undefined) => {
-    if (!next) return
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(next.type)) { setError('Choose a JPG, PNG or WEBP image.'); return }
-    if (next.size > 10 * 1024 * 1024) { setError('The image must be smaller than 10 MB.'); return }
-    setFile(next); setPreview(URL.createObjectURL(next)); setResult(null); setError('')
-  }
-  const openCamera = async () => {
-    setError('')
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
-      streamRef.current = stream; setCameraOpen(true)
-      window.setTimeout(() => { if (videoRef.current) { videoRef.current.srcObject = stream; void videoRef.current.play() } }, 80)
-    } catch { setError('Camera access is unavailable. Use image upload instead, or allow camera permission in your browser.') }
-  }
-  const closeCamera = () => { streamRef.current?.getTracks().forEach(track => track.stop()); streamRef.current = null; setCameraOpen(false) }
-  const captureFrame = () => {
-    const video = videoRef.current
-    if (!video || !video.videoWidth) return
-    const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight
-    canvas.getContext('2d')?.drawImage(video, 0, 0)
-    canvas.toBlob(blob => { if (blob) selectFile(new File([blob], `camera-capture-${Date.now()}.jpg`, { type: 'image/jpeg' })); closeCamera() }, 'image/jpeg', 0.92)
-  }
-  const analyze = async () => {
-    if (!file) return
-    setBusy(true); setError(''); setResult(null)
-    try { const response = await api.detect(file); setResult({ message: response.message, detections: response.detections }); await onRefresh() }
-    catch (e) { setError(e instanceof Error ? e.message : 'Image analysis failed') }
-    finally { setBusy(false) }
-  }
-  return <>
-    <PageIntro eyebrow="ARTIFICIAL INTELLIGENCE" title="Waste detection" description="Analyze waste imagery with a custom object-detection model and review risk signals." action={<div className={`model-state ${isModelReady ? 'ready' : 'not-ready'}`}><span />{isModelReady ? 'YOLO model ready' : 'Model setup required'}</div>} />
-    {!isModelReady && <div className="notice-banner"><div className="notice-icon"><Sparkles size={19} /></div><div><strong>AI model is not configured yet</strong><p>{aiStatus?.message || 'Train a custom YOLO model and add its best.pt weights to backend/ai/weights/.'} The application will not generate placeholder predictions.</p></div><span className="notice-tag">SETUP</span></div>}
-    <div className="ai-layout"><section className="panel upload-panel"><div className="panel-heading"><div><div className="panel-kicker">IMAGE ACQUISITION</div><h2>Upload waste image</h2></div><span className="tiny-chip">Max 10 MB</span></div>
-      {cameraOpen ? <div className="camera-view"><video ref={videoRef} playsInline muted /><div className="camera-actions"><button className="button button-primary" onClick={captureFrame}><Camera size={16} /> Capture image</button><button className="button button-ghost" onClick={closeCamera}>Cancel</button></div></div> : <>
-        <button className={`dropzone ${preview ? 'has-preview' : ''}`} onClick={() => fileInputRef.current?.click()} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); selectFile(event.dataTransfer.files[0]) }}>
-          {preview ? <><img src={preview} alt="Selected waste item" /><span className="preview-overlay"><FileImage size={17} /> Replace image</span></> : <><div className="upload-icon"><Upload size={22} /></div><strong>Drop an image here, or browse</strong><span>JPG, PNG or WEBP · Up to 10 MB</span></>}
-        </button>
-        <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" onChange={event => selectFile(event.target.files?.[0])} />
-        <div className="upload-actions"><button className="button button-secondary" onClick={() => fileInputRef.current?.click()}><Upload size={15} /> Browse files</button><button className="button button-ghost" onClick={openCamera}><Camera size={15} /> Use camera</button></div>
-      </>}
-      {error && <div className="error-box"><AlertTriangle size={15} />{error}</div>}
-      {preview && !cameraOpen && <div className="selected-file"><FileImage size={16} /><div><strong>{file?.name}</strong><span>{file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : ''}</span></div><button className="icon-button" onClick={() => { setFile(null); setPreview(''); setResult(null) }}><X size={16} /></button></div>}
-      <button className="button button-primary analyze-button" disabled={!file || !isModelReady || busy} onClick={analyze}>{busy ? <><RefreshCw size={16} className="spin" /> Analyzing image…</> : <><ScanSearch size={16} /> Analyze waste image</>}</button>
-      {!isModelReady && <p className="disabled-hint">Image analysis becomes available after a trained YOLO model is installed.</p>}
-    </section>
-    <section className="panel result-panel"><div className="panel-heading"><div><div className="panel-kicker">MODEL OUTPUT</div><h2>Detection results</h2></div><span className="tiny-chip">{config.ai.classes.length} target classes</span></div>
-      {!result ? <div className="result-placeholder"><div className="scan-illustration"><ScanSearch size={36} /><span /><i /></div><strong>Waiting for an image</strong><p>Upload a waste image and run the trained model to see detected objects, confidence scores and risk levels.</p><div className="class-chips">{config.ai.classes.map(className => <span key={className}>{className.replace(/_/g, " ")}</span>)}</div></div> : <div className="result-content"><div className="result-summary"><div><span>Objects detected</span><strong>{result.detections.length}</strong></div><div><span>Model response</span><strong>{result.message}</strong></div></div>{result.detections.length ? result.detections.map(item => <div className="detection-result" key={item.id}><div><strong>{item.class_name.replace(/_/g, ' ')}</strong><span>{(item.confidence * 100).toFixed(1)}% confidence</span></div><span className={`risk-pill ${item.risk_level}`}>{item.risk_level.replace(/_/g, ' ')}</span></div>) : <div className="empty-inline">No target objects detected in this image.</div>}</div>}
-      <div className="model-classes"><div className="micro-label">MODEL CLASSES</div><div className="class-grid">{config.ai.classes.map(className => <span key={className}>{className.replace(/_/g, " ")}</span>)}</div></div>
-    </section></div>
-    <div className="ai-disclaimer"><ShieldAlert size={16} /><span>Visual AI screening is not a chemical or biological hazard test. Low-confidence, unknown, or safety-critical items require human review.</span></div>
   </>
 }
 
