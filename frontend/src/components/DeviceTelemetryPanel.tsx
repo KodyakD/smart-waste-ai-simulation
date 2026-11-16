@@ -23,7 +23,7 @@ export default function DeviceTelemetryPanel({ bin, config }: Props) {
   return (
     <section className="panel device-telemetry-panel">
       <div className="panel-heading">
-        <div><div className="panel-kicker">VIRTUAL DEVICE TELEMETRY</div><h2>ESP32 payload</h2></div>
+        <div><h2>ESP32 payload</h2></div>
         <span className={`device-state ${bin.is_running ? 'running' : 'paused'}`}>{bin.is_running ? 'Running' : 'Paused'}</span>
       </div>
       <div className="device-telemetry-grid">

@@ -288,6 +288,24 @@ Do these in order; each step must leave the app running.
 Do not start step 2 before step 1 lands, or the new UI inherits the same
 hardcoded values.
 
+## 10. Interface
+
+The UI is a **technical drawing on paper**, not a dashboard template. Tokens
+live in `frontend/src/styles.css` (`--paper`, `--card`, `--ink`, `--rule`,
+`--accent`); type is Barlow + Barlow Semi Condensed + JetBrains Mono.
+
+- Paper background `#f8f1e6`, cards `#fffbf5`, ink `#0f2239`, hairline rules
+  `#e5d8c5`, one orange accent `#f86b1d`. Colour means state: green normal,
+  amber almost full, red full/hazard, grey unsupported.
+- No shadows, no gradients, no icon tiles, no coloured-dot logos, no
+  tracked-out all-caps eyebrows above headings. Uppercase is reserved for
+  short labels and buttons.
+- Severity is never colour alone — every alert shows the severity word.
+- The simulator is a section drawing of the bin (`ImmersiveBinScene.tsx`):
+  navy line art, hatched waste, leader-line callouts, a title block. Every
+  number in it comes from the backend, not from the drawing.
+- Numbers, IDs, timestamps and payloads use the mono face so columns align.
+
 ## 9. Known traps
 
 - `tsc -b` fails the build on unused imports (`TS6133`) and missing imports

@@ -1,4 +1,3 @@
-import { Radio } from 'lucide-react'
 import type { AppConfig, Bin } from './types'
 import './immersive-scene.css'
 
@@ -11,213 +10,114 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
 }
 
+/* Section drawing of a virtual bin. Every number is read from the backend:
+   capacity and echo distance from the bin, thresholds from the runtime config. */
 export default function ImmersiveBinScene({ bin, config }: Props) {
   const fill = clamp(bin.fill_percentage, 0, 100)
-  const surfaceY = 383 - (fill / 100) * 213
   const distance = Math.max(0, bin.distance_cm)
+  const rimY = 175
+  const floorY = 470
+  const surfaceY = floorY - (fill / 100) * (floorY - rimY + 20)
+  const echoMicroseconds = (2 * distance) / config.simulation.speed_of_sound_cm_per_us
   const safeId = bin.id.replace(/[^a-zA-Z0-9_-]/g, '')
-  const clipId = 'waste-front-' + safeId
-  const sideClipId = 'waste-side-' + safeId
-  const status = fill >= config.thresholds.full ? 'Full capacity' : fill >= config.thresholds.almost_full ? 'Collection soon' : 'Normal operation'
+  const status = fill >= config.thresholds.full ? 'Full capacity' : fill >= config.thresholds.almost_full ? 'Collection due' : 'Normal operation'
   const tone = fill >= config.thresholds.full ? 'critical' : fill >= config.thresholds.almost_full ? 'warning' : 'healthy'
 
+  const wasteFront = `M470 ${surfaceY} Q515 ${surfaceY - 12} 556 ${surfaceY + 1} T640 ${surfaceY + 2} L620 ${floorY} L490 ${floorY} Z`
+  const wasteSide = `M640 ${surfaceY + 2} L706 ${surfaceY + 36} L682 462 L620 ${floorY} Z`
+  const echoLabelY = 118 + (surfaceY - 118) * 0.52
+
   return (
-    <section className={'immersive-scene ' + (bin.is_running ? 'scene-running' : 'scene-paused')} aria-label="Interactive virtual garbage bin hardware visualization">
-      <div className="scene-grid" />
-      <div className="scene-glow scene-glow-one" />
-      <div className="scene-glow scene-glow-two" />
+    <section className={'scene-stage ' + (bin.is_running ? 'scene-running' : 'scene-paused')} aria-label={`Section drawing of bin ${bin.id}, ${Math.round(fill)} percent full, sensor distance ${distance.toFixed(1)} centimetres`}>
+      <div className="scene-paper" />
+      <svg className="scene-drawing" viewBox="0 0 1000 520" role="img">
+        <defs>
+          <pattern id={'hatch-' + safeId} width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="10" stroke="#0f2239" strokeOpacity=".2" strokeWidth="1.1" />
+          </pattern>
+          <clipPath id={'front-' + safeId}>
+            <path d="M470 175 L640 175 L620 470 L490 470 Z" />
+          </clipPath>
+          <clipPath id={'side-' + safeId}>
+            <path d="M640 175 L706 205 L682 462 L620 470 Z" />
+          </clipPath>
+        </defs>
 
-      <div className="scene-topline">
-        <div className="scene-topline-left">
-          <span className="scene-live-indicator"><i /> {bin.is_running ? 'LIVE SIMULATION' : 'SIMULATION PAUSED'}</span>
-          <span className="scene-separator">/</span>
-          <span className="scene-device-name">ULTRASONIC LEVEL MONITOR</span>
-        </div>
-        <span className="scene-bin-id">{bin.id} <span>•</span> VIRTUAL DEVICE</span>
-      </div>
+        {/* floor */}
+        <path d="M330 470 H790" stroke="#0f2239" strokeOpacity=".32" strokeWidth="1.2" />
+        <path d="M330 478 H790" stroke="#0f2239" strokeOpacity=".13" strokeWidth="1" strokeDasharray="12 9" />
 
-      <div className="scene-main">
-        <div className="scene-canvas">
-          <div className="scene-side-caption scene-caption-sensor">
-            <span className="scene-caption-icon">01</span>
-            <span><strong>Ultrasonic module</strong><small>HC-SR04 · top mounted</small></span>
-          </div>
-          <div className="scene-side-caption scene-caption-waste">
-            <span className="scene-caption-icon">02</span>
-            <span><strong>Waste surface</strong><small>{Math.round(fill)}% of usable capacity</small></span>
-          </div>
+        {/* bin shell */}
+        <path d="M640 175 L706 205 L682 462 L620 470 Z" fill="#f1e8d8" fillOpacity=".9" stroke="#0f2239" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M470 175 L640 175 L620 470 L490 470 Z" fill="#fdfaf3" fillOpacity=".92" stroke="#0f2239" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M484 196 L498 452 M626 196 L612 452" stroke="#0f2239" strokeOpacity=".14" strokeWidth="1" />
 
-          <svg className="scene-bin-svg" viewBox="0 0 620 460" role="img" aria-label={'Transparent virtual garbage bin, ' + Math.round(fill) + ' percent full, sensor distance ' + distance.toFixed(1) + ' centimetres'}>
-            <defs>
-              <linearGradient id={'bin-front-' + safeId} x1="0" x2="1" y1="0" y2="0">
-                <stop offset="0" stopColor="#b6d9ca" stopOpacity=".12" />
-                <stop offset=".48" stopColor="#e6fff1" stopOpacity=".13" />
-                <stop offset="1" stopColor="#9abdae" stopOpacity=".08" />
-              </linearGradient>
-              <linearGradient id={'bin-side-' + safeId} x1="0" x2="1">
-                <stop offset="0" stopColor="#9fc7b5" stopOpacity=".2" />
-                <stop offset="1" stopColor="#6f9d88" stopOpacity=".08" />
-              </linearGradient>
-              <linearGradient id={'waste-fill-' + safeId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0" stopColor="#d4a46d" />
-                <stop offset=".55" stopColor="#a8794f" />
-                <stop offset="1" stopColor="#76573e" />
-              </linearGradient>
-              <linearGradient id={'waste-side-fill-' + safeId} x1="0" x2="1">
-                <stop offset="0" stopColor="#a67a53" />
-                <stop offset="1" stopColor="#70543d" />
-              </linearGradient>
-              <linearGradient id={'sensor-metal-' + safeId} x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stopColor="#8ce8bd" />
-                <stop offset=".5" stopColor="#3da77f" />
-                <stop offset="1" stopColor="#236c55" />
-              </linearGradient>
-              <clipPath id={clipId}>
-                <path d="M190 151 L393 151 L373 382 L210 382 Z" />
-              </clipPath>
-              <clipPath id={sideClipId}>
-                <path d="M393 151 L453 179 L431 410 L373 382 Z" />
-              </clipPath>
-              <filter id={'soft-shadow-' + safeId} x="-30%" y="-30%" width="160%" height="180%">
-                <feGaussianBlur stdDeviation="12" />
-              </filter>
-            </defs>
+        {/* waste volume */}
+        {fill > 0 && <>
+          <g clipPath={'url(#side-' + safeId + ')'}>
+            <path d={wasteSide} fill={'url(#hatch-' + safeId + ')'} />
+          </g>
+          <g clipPath={'url(#front-' + safeId + ')'}>
+            <path d={wasteFront} fill={'url(#hatch-' + safeId + ')'} />
+          </g>
+          <path d={`M470 ${surfaceY} Q515 ${surfaceY - 12} 556 ${surfaceY + 1} T640 ${surfaceY + 2}`} fill="none" stroke="#0f2239" strokeWidth="2.4" strokeLinecap="round" />
+        </>}
 
-            <ellipse cx="315" cy="414" rx="178" ry="19" fill="#000" opacity=".23" filter={'url(#soft-shadow-' + safeId + ')'} />
-            <ellipse cx="315" cy="414" rx="151" ry="12" fill="#07110f" opacity=".45" />
+        {/* lid */}
+        <path d="M470 165 L640 165 L706 195 L536 195 Z" fill="#e5d8c5" stroke="#0f2239" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M470 165 L640 165 L640 179 L470 179 Z" fill="#d9c9ab" stroke="#0f2239" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M640 165 L706 195 L706 209 L640 179 Z" fill="#cbb894" stroke="#0f2239" strokeWidth="2" strokeLinejoin="round" />
 
-            {/* Floor markings and height scale */}
-            <path d="M82 399 H520 M112 409 H488" stroke="#527568" strokeOpacity=".2" strokeDasharray="3 8" />
-            <g className="scene-height-scale">
-              <path d="M493 170 V383" stroke="#9ac7b2" strokeOpacity=".55" strokeWidth="1.2" />
-              {[0, 25, 50, 75, 100].map((tick) => {
-                const y = 383 - tick * 2.13
-                return <g key={tick}>
-                  <path d={'M486 ' + y + ' H500'} stroke="#9ac7b2" strokeOpacity=".7" />
-                  <text x="508" y={y + 3} fill="#8fb5a3" fontSize="10">{tick}%</text>
-                </g>
-              })}
-            </g>
+        {/* sensor module */}
+        <path d="M508 118 V150 M592 118 V150 M496 150 H604" stroke="#0f2239" strokeWidth="2.4" strokeLinecap="round" />
+        <rect x="510" y="76" width="80" height="42" rx="3" fill="#fdfaf3" stroke="#0f2239" strokeWidth="2" />
+        <circle cx="530" cy="97" r="10" fill="#f8f1e6" stroke="#0f2239" strokeWidth="1.6" />
+        <circle cx="570" cy="97" r="10" fill="#f8f1e6" stroke="#0f2239" strokeWidth="1.6" />
+        <path d="M530 97 H570" stroke="#0f2239" strokeOpacity=".3" strokeWidth="1" strokeDasharray="3 4" />
 
-            {/* Ultrasonic return path */}
-            <path className="scene-sonar-beam" d={'M321 112 V' + (surfaceY - 9)} />
-            <path className="scene-sonar-return" d={'M328 ' + (surfaceY - 6) + ' H425'} />
-            <g className="scene-sonar-rings" transform={'translate(321 ' + (surfaceY - 4) + ')'}>
-              <path d="M-15 0 Q0 -11 15 0" />
-              <path d="M-24 0 Q0 -20 24 0" />
-              <path d="M-34 0 Q0 -29 34 0" />
-            </g>
-            <circle cx="321" cy={surfaceY} r="4.5" fill="#79e4b2" className="scene-impact-dot" />
+        {/* echo dimension, drawn from the sensor face to the waste surface */}
+        <g className="scene-echo">
+          <path d={`M550 118 V${surfaceY}`} stroke="#0f2239" strokeWidth="1.1" strokeDasharray="6 5" />
+          <path d={`M544 124 L550 118 L556 124`} fill="none" stroke="#0f2239" strokeWidth="1.4" />
+          <path d={`M544 ${surfaceY - 6} L550 ${surfaceY} L556 ${surfaceY - 6}`} fill="none" stroke="#0f2239" strokeWidth="1.4" />
+        </g>
+        <text className="scene-echo-value" x="560" y={echoLabelY}>{distance.toFixed(1)} cm</text>
+        <text className="scene-note" x="560" y={echoLabelY + 16}>{echoMicroseconds.toFixed(0)} µs round trip</text>
 
-            {/* Sensor bracket */}
-            <path d="M280 103 V126 M362 103 V126 M271 126 H371" stroke="#6ca58b" strokeWidth="5" strokeLinecap="round" opacity=".75" />
-            <rect x="258" y="69" width="126" height="43" rx="8" fill="#17392f" stroke="#5fc99a" strokeWidth="1.5" />
-            <rect x="266" y="76" width="110" height="29" rx="5" fill="#214d3e" />
-            <circle cx="290" cy="91" r="13" fill="#10271f" stroke={'url(#sensor-metal-' + safeId + ')'} strokeWidth="3" />
-            <circle cx="290" cy="91" r="8" fill="#091914" stroke="#7ce3b4" strokeOpacity=".7" />
-            <circle cx="352" cy="91" r="13" fill="#10271f" stroke="#56bb8d" strokeWidth="3" />
-            <circle cx="352" cy="91" r="8" fill="#091914" stroke="#7ce3b4" strokeOpacity=".7" />
-            <circle cx="321" cy="112" r="2.5" fill="#9af3c7" />
+        {/* usable range bracket */}
+        <path d="M745 175 V470" stroke="#0f2239" strokeOpacity=".55" strokeWidth="1.2" />
+        <path d="M739 181 L745 175 L751 181" fill="none" stroke="#0f2239" strokeWidth="1.4" />
+        <path d="M739 464 L745 470 L751 464" fill="none" stroke="#0f2239" strokeWidth="1.4" />
+        <path d="M745 312 H772" stroke="#0f2239" strokeOpacity=".35" strokeWidth="1" />
+        <text className="scene-note" x="780" y="172">0% — {bin.capacity_cm.toFixed(1)} cm to sensor</text>
+        <text className="scene-note" x="780" y="466">100% — {config.simulation.full_distance_cm.toFixed(1)} cm to sensor</text>
+        <text className="scene-label" x="780" y="316">USABLE RANGE</text>
 
-            {/* Bin lid and rear rim */}
-            <path d="M171 145 Q303 119 413 145 L472 169 Q332 201 223 176 Z" fill="#183c30" stroke="#75a78e" strokeWidth="2" />
-            <path d="M188 145 Q304 125 401 145 L453 165 Q330 190 237 171 Z" fill="#294f41" stroke="#8bbca4" strokeOpacity=".55" />
-            <path d="M197 148 Q303 133 395 148" fill="none" stroke="#b4e4ca" strokeOpacity=".35" strokeWidth="2" />
+        {/* callouts */}
+        <g className="scene-callout">
+          <path d="M250 88 H420 L508 90" fill="none" stroke="#a49a8c" strokeWidth="1" strokeDasharray="4 4" />
+          <circle cx="508" cy="90" r="3" fill="#f86b1d" />
+          <text className="scene-label" x="40" y="84">ULTRASONIC MODULE</text>
+          <text className="scene-note" x="40" y="104">HC-SR04 · top mounted</text>
+        </g>
+        <g className="scene-callout">
+          <path d={`M250 336 H340 L${476} ${surfaceY}`} fill="none" stroke="#a49a8c" strokeWidth="1" strokeDasharray="4 4" />
+          <circle cx="476" cy={surfaceY} r="3" fill="#f86b1d" />
+          <text className="scene-label" x="40" y="332">WASTE SURFACE</text>
+          <text className="scene-note" x="40" y="352">{Math.round(fill)}% of usable capacity</text>
+        </g>
 
-            {/* Waste volume */}
-            {fill > 0 && <>
-              <g clipPath={'url(#' + sideClipId + ')'}>
-                <path d={'M393 ' + (surfaceY + 1) + ' L453 ' + (surfaceY + 28) + ' L431 410 L373 382 Z'} fill={'url(#waste-side-fill-' + safeId + ')'} />
-              </g>
-              <g clipPath={'url(#' + clipId + ')'}>
-                <path d={'M190 ' + surfaceY + ' Q224 ' + (surfaceY - 10) + ' 260 ' + (surfaceY + 1) + ' T330 ' + surfaceY + ' T393 ' + (surfaceY + 2) + ' L373 382 L210 382 Z'} fill={'url(#waste-fill-' + safeId + ')'} />
-                <path d={'M190 ' + surfaceY + ' Q224 ' + (surfaceY - 10) + ' 260 ' + (surfaceY + 1) + ' T330 ' + surfaceY + ' T393 ' + (surfaceY + 2)} fill="none" stroke="#e8bd88" strokeWidth="3" strokeOpacity=".85" />
-                <g opacity=".9">
-                  <path d={'M228 ' + (surfaceY + 24) + ' l33 -7 12 17 -31 13 Z'} fill="#e5c69b" stroke="#8b6748" strokeWidth="1.2" />
-                  <path d={'M280 ' + (surfaceY + 36) + ' q12 -8 24 0 l-4 23 q-12 8 -24 -1 Z'} fill="#4a92a1" stroke="#9bd0d4" strokeWidth="1.5" />
-                  <path d={'M286 ' + (surfaceY + 34) + ' h12 v-5 h-12 Z'} fill="#d9e7e0" />
-                  <rect x="329" y={surfaceY + 20} width="23" height="36" rx="5" fill="#d9a94b" stroke="#7f6839" strokeWidth="1.2" transform={'rotate(18 340 ' + (surfaceY + 38) + ')'} />
-                  <path d={'M333 ' + (surfaceY + 31) + ' h15'} stroke="#fff0c0" strokeWidth="2" transform={'rotate(18 340 ' + (surfaceY + 38) + ')'} />
-                  <path d={'M238 ' + (surfaceY + 73) + ' l31 -9 11 12 -26 16 Z'} fill="#7d6d55" stroke="#c7b38e" strokeWidth="1" />
-                  <path d={'M298 ' + (surfaceY + 82) + ' q16 -14 28 -1 l-3 11 -29 2 Z'} fill="#c7d2c8" stroke="#758d7e" strokeWidth="1" />
-                  <circle cx="364" cy={surfaceY + 79} r="10" fill="#d8b47d" stroke="#8e6d47" />
-                </g>
-                <g opacity=".22" fill="#fff">
-                  <path d="M206 314 l36 -9 9 5 -34 11 Z" />
-                  <path d="M310 350 l41 -8 10 4 -40 10 Z" />
-                </g>
-              </g>
-            </>}
+        {/* figure on the drawing */}
+        <text className="scene-figure" x="482" y={surfaceY - 12}>{Math.round(fill)}%</text>
+      </svg>
 
-            {/* Transparent front and right side shell */}
-            <path d="M393 151 L453 179 L431 410 L373 382 Z" fill={'url(#bin-side-' + safeId + ')'} stroke="#86b9a1" strokeWidth="2.2" />
-            <path d="M190 151 L393 151 L373 382 L210 382 Z" fill={'url(#bin-front-' + safeId + ')'} stroke="#a4d1bc" strokeWidth="2.4" />
-            <path d="M191 152 L210 382 M392 153 L373 382" stroke="#d3f4df" strokeOpacity=".28" strokeWidth="5" />
-            <path d="M216 169 L228 354 M379 169 L364 354" stroke="#b8e5cc" strokeOpacity=".2" strokeWidth="2" />
-            <path d="M199 194 H385 M196 266 H379 M190 337 H373" stroke="#b4ddc6" strokeOpacity=".14" strokeDasharray="3 7" />
-            <path d="M210 382 L373 382 L431 410" fill="none" stroke="#a3d3ba" strokeWidth="2.5" />
-            <path d="M220 391 L220 402 M362 391 L362 402 M420 398 L420 407" stroke="#67947e" strokeWidth="7" strokeLinecap="round" />
-
-            {/* Front access panel */}
-            <path d="M258 185 L328 185 L322 202 L256 202 Z" fill="#e0f6e8" fillOpacity=".08" stroke="#a7d5bd" strokeOpacity=".4" />
-            <path d="M272 194 H311" stroke="#a3d7ba" strokeOpacity=".45" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="305" cy="194" r="2" fill="#a3d7ba" />
-
-            {/* Small indicator on the bin */}
-            <circle cx="342" cy="215" r="5" fill={tone === 'critical' ? '#ff836f' : tone === 'warning' ? '#f2c46e' : '#70e2a8'} className="scene-bin-led" />
-            <circle cx="342" cy="215" r="10" fill={tone === 'critical' ? '#ff836f' : tone === 'warning' ? '#f2c46e' : '#70e2a8'} opacity=".12" />
-
-            {/* Distance label */}
-            <g className="scene-distance-tag" transform="translate(408 244)">
-              <rect width="105" height="38" rx="8" fill="#112d24" stroke="#4d8b70" />
-              <text x="12" y="14" fill="#8bbba2" fontSize="8" fontWeight="700" letterSpacing="1">ECHO DISTANCE</text>
-              <text x="12" y="29" fill="#e8fff1" fontSize="13" fontWeight="800">{distance.toFixed(1)} cm</text>
-            </g>
-          </svg>
-
-          <div className="scene-axis-label scene-axis-top">EMPTY <span>{bin.capacity_cm.toFixed(1)} cm</span></div>
-          <div className="scene-axis-label scene-axis-bottom">FULL <span>{config.simulation.full_distance_cm.toFixed(1)} cm</span></div>
-        </div>
-
-        <aside className="scene-instrument-panel">
-          <div className="scene-instrument-heading">
-            <span>LIVE TELEMETRY</span>
-            <span className={bin.is_running ? 'instrument-live' : 'instrument-paused'}><i /> {bin.is_running ? 'STREAMING' : 'PAUSED'}</span>
-          </div>
-
-          <div className="scene-fill-card">
-            <div className="scene-fill-copy">
-              <span>BIN CAPACITY</span>
-              <strong>{Math.round(fill)}<small>%</small></strong>
-              <em className={'scene-status ' + tone}>{status}</em>
-            </div>
-            <div className="scene-ring" style={{ background: 'conic-gradient(#70dca5 ' + fill + '%, rgba(140,190,164,.13) 0)' }}>
-              <div><strong>{Math.round(fill)}%</strong><small>filled</small></div>
-            </div>
-          </div>
-
-          <div className="scene-meter">
-            <div className="scene-meter-label"><span>Sensor distance</span><strong>{distance.toFixed(1)} <small>cm</small></strong></div>
-            <div className="scene-distance-meter"><span style={{ width: clamp((distance / bin.capacity_cm) * 100, 0, 100) + '%' }} /></div>
-            <div className="scene-meter-hints"><span>Near</span><span>Far</span></div>
-          </div>
-
-          <div className="scene-signal-card">
-            <div className="scene-signal-icon"><Radio size={16} /></div>
-            <div><strong>Ultrasonic echo</strong><span>Round-trip time estimate</span></div>
-            <span className="scene-signal-value">{((2 * distance) / config.simulation.speed_of_sound_cm_per_us).toFixed(0)} <small>µs</small></span>
-          </div>
-
-        </aside>
-      </div>
-
-      <div className="scene-bottomline">
-        <div className="scene-legend">
-          <span><i className="legend-pulse" /> Sonar pulse</span>
-          <span><i className="legend-surface" /> Waste surface</span>
-          <span><i className="legend-shell" /> Transparent bin shell</span>
-        </div>
-        <div className={'scene-capacity-note ' + tone}><span /> {status}</div>
+      <div className="scene-titleblock">
+        <div><span className="scene-tb-key">SECTION</span><span className="scene-tb-value">A—A</span></div>
+        <div><span className="scene-tb-key">UNIT</span><span className="scene-tb-value">{bin.id}</span></div>
+        <div><span className="scene-tb-key">LOCATION</span><span className="scene-tb-value">{bin.name}</span></div>
+        <div><span className="scene-tb-key">EMPTY</span><span className="scene-tb-value">{bin.capacity_cm.toFixed(1)} cm</span></div>
+        <div><span className="scene-tb-key">FULL</span><span className="scene-tb-value">{config.simulation.full_distance_cm.toFixed(1)} cm</span></div>
+        <div><span className="scene-tb-key">STATE</span><span className={'scene-tb-value scene-state-' + tone}>{bin.is_running ? 'Live' : 'Held'} · {status}</span></div>
       </div>
     </section>
   )
